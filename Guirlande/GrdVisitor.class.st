@@ -371,11 +371,44 @@ GrdVisitor >> visitMessageNode: aNode [
 { #category : #visiting }
 GrdVisitor >> visitMethodNode: aMethodNode [ 
 	
-	| b |
+	|inferer entries b methods messages statements childishNode|
+	inferer := PhineasInferer new.
+	messages := OrderedCollection new.
+	methods := OrderedCollection new.
+	inferer infer:  (BlockClosure readFrom: '[',aMethodNode body sourceCode,']') .
+	entries := inferer entryPoints.
+	( entries collect: [:aMethodType| aMethodType messagesTypes]) do: [:each | messages addAll: each].
+	( messages collect:[:aMessageType| aMessageType methodTypes ]) do: [:each | methods addAll: each].
+	
+	statements := aMethodNode body statements.
+		
 	b := GrdBodyNode new.
-	b insertChildren: (aMethodNode body statements collect: [:each | (self visitNode: each) ]).
+	(statements do: [:each |  (each class = RBMessageNode) 		
+				ifTrue:[childishNode := GrdChildishNode new. (messages select: [ :any | any message = each ]) do: [:all | all methodTypes do: [ :method| childishNode addChild: (self visitMethodNode: method node with: inferer from: method). b addChild: childishNode]]]
+				ifFalse: [b addChild: (self visitNode: each)]]).
 	b name: 'method name'.
-	^ b
+	^ b 
+]
+
+{ #category : #visiting }
+GrdVisitor >> visitMethodNode: aMethodNode with: anInferer from: entryPoints [
+	
+	| entries b methods messages statements childishNode|
+	messages := OrderedCollection new.
+	methods := OrderedCollection new.
+	entries := entryPoints. "have to move entry points"
+	entries messagesTypes do: [:each | messages add: each].
+	( messages collect:[:aMessageType| aMessageType methodTypes ]) do: [:each | methods addAll: each].
+	
+	statements := aMethodNode body statements.
+		
+	b := GrdBodyNode new.
+	
+	( statements do: [:each |  (each class = RBMessageNode) 		
+				ifTrue:[childishNode := GrdChildishNode new. (messages select: [ :any | any message = each ]) do: [:all | all methodTypes do: [ :method| childishNode addChild: (self visitMethodNode: method node with: anInferer from: method)]]. b addChild: childishNode]
+				ifFalse: [b addChild: (self visitNode: each)]] ) .
+	b name: 'method name'.
+	^ b 
 ]
 
 { #category : #visiting }

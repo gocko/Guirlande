@@ -460,15 +460,15 @@ GuirlandeTest >> testMethodControlFlowHasAnExitNode [
 
 { #category : #tests }
 GuirlandeTest >> testOnlyMethod [
-	| childisNode   |
+	| childishNode   |
 	self visitSampleMethodNamed: #onlyMethod.
-	childisNode := visitor startNode nextNode.
-	self assert: visitor startNode nextNode nextNode isExit.
-	self assert: childisNode class equals: GrdChildishNode.
-	self assert: childisNode children size equals:5.
-	self assert: (childisNode children at:2) class equals: GrdVariableNode.
-	self assert: (childisNode children at:3) class equals: GrdConstantNode.
-	self assert: (childisNode children at:4) class equals: GrdConstantNode.
+	childishNode := visitor node.
+	self assert: childishNode class equals: GrdBodyNode.
+	self assert: childishNode children size equals: 5.
+	self assert: (childishNode children at:2) class equals: GrdAssignmentNode.
+	self assert: (childishNode children at:3) class equals: GrdAssignmentNode.
+	self assert: (childishNode children at:4) class equals: GrdChildishNode.
+	self assert: ((childishNode children at:4) children at: 2) class equals: GrdBodyNode.
 ]
 
 { #category : #tests }

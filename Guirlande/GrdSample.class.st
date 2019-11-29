@@ -125,6 +125,11 @@ GrdSample >> loopDo [
 ]
 
 { #category : #selectors }
+GrdSample >> loopDo: aCollection [
+	aCollection do: [ :i |  i ]
+]
+
+{ #category : #selectors }
 GrdSample >> loopExample [
 	 #(1 2 3 4) from: 1 to: 4 do: [ :i |  i ]
 ]
@@ -164,7 +169,12 @@ GrdSample >> onlyConstant [
 
 { #category : #accessing }
 GrdSample >> onlyMethod [
- self today: 1 tommorow:2
+
+	| aNumber anotherNumber |  
+
+	aNumber := 3. 
+	anotherNumber  := 7. 
+	aNumber gcd: anotherNumber
 	
 ]
 
@@ -213,5 +223,6 @@ GrdSample >> subtraction [
 
 { #category : #accessing }
 GrdSample >> today:today tommorow: tommorow [
+^ today + tommorow
 
 ]
