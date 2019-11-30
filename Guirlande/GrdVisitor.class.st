@@ -382,9 +382,9 @@ GrdVisitor >> visitLiteralNode: aNode [
 GrdVisitor >> visitMessageNode: aNode [
 	| b methods messages childishNode|
 	
-	(self isControlFlowSelector: aNode selector)
+	"(self isControlFlowSelector: aNode selector)
 		ifTrue: [  ^ self perform: (self transformSelector: aNode selector) asSymbol with: aNode].
-
+"
 	(self isBinarySelector: aNode selector)
 		ifTrue: [  ^ self visitBinary: aNode].
 
@@ -419,7 +419,7 @@ GrdVisitor >> visitMethodNode: aMethodNode [
 	(self inferer isNil & block isClean  ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
 	b := GrdBodyNode new.
 	b addChild: ( self visitBodyNode: aMethodNode body)" at: inferer entryPoints".
-	b name: 'method name'.
+	b name: aMethodNode selector asString .
 	^ b 
 ]
 

@@ -89,6 +89,15 @@ GrdSample >> justIfFalse [
 ]
 
 { #category : #selectors }
+GrdSample >> justIfFalseIfTrue [
+
+true
+	ifFalse: [ 11 ]
+	ifTrue: [ 22 ]
+	
+]
+
+{ #category : #selectors }
 GrdSample >> justIfTrue [
 	true ifTrue:[1]
 	
@@ -117,6 +126,15 @@ GrdSample >> justIfTrueFalseBlokIf [
 			do: [ :each | true ifTrue:[each] ifFalse:[23]]]
 	
 
+]
+
+{ #category : #selectors }
+GrdSample >> justIfTrueIfFalse [
+
+	true
+		ifTrue: [ 33 ]
+		ifFalse: [ 42 ]
+	
 ]
 
 { #category : #selectors }
@@ -169,6 +187,15 @@ GrdSample >> onlyConstant [
 	
 ]
 
+{ #category : #selectors }
+GrdSample >> onlyIfFalseIfTrue [
+
+true
+	ifFalse: [ 11 ]
+	ifTrue: [ 22 ]
+	
+]
+
 { #category : #accessing }
 GrdSample >> onlyMethod [
 
@@ -201,7 +228,7 @@ GrdSample >> onlyStatement [
 { #category : #selectors }
 GrdSample >> pureReturnIfFalseIfTrue [
 
-	^ true
+	^true
 			ifFalse: [ 11 ]
 			ifTrue: [ 22 ]
 	
