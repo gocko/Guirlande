@@ -39,56 +39,88 @@ GrdVisualize >> showColors:flag node: c view:view visitor:visitor [
 ]
 
 { #category : #visualization }
-GrdVisualize >> visitedNodes: view [
-	|visitor astv|
-	visitor := GrdVisitor new.
-	astv := self visitedTree. "get body of CFG"
-	view nodes: astv children forEach: [ : n | 
-			(n isKindOf: GrdChildishNode) ifTrue: [ 
-			   view shape rectangle fillColor:Color green; withTextAbove.
-			   self hasChildBody:n show: view flag:1 visitor: visitor.
-				view shape arrowedLine.	
-				view edges connectTo: #nextNode.
-				view layout tree. ].
-	]. 
-]
-
-{ #category : #visualization }
 GrdVisualize >> visitedTree [
 	| ast visitor astv|
-	ast := RBParser parseMethod: (GrdSample>>#justIfTrueFalseBlokIf) getSource.
+	ast := RBParser parseMethod: (GrdSample>>#justIfTrueFalseBlokIf) getSourceFromFile .
 	visitor := GrdVisitor new.
 	astv := (ast acceptVisitor: visitor).
 	^ astv.
 ]
 
 { #category : #'main methods' }
-GrdVisualize >> visualizeAST [	
-	| ast visitor view nodesToShow astv|
-	ast := RBParser parseMethod: (GrdSample>>#loopExample) getSource.
+GrdVisualize >> visualizeAST [ 
+| ast astv visitor c shapes eb lbl lps|
+	c := RSCanvas new.
+	
+	ast := RBParser parseMethod: (GrdSample>>#justIfTrue) getSourceFromFile .
 	visitor := RBProgramNodeVisitor new.
 	astv := (ast acceptVisitor: visitor).
 	astv.
-	view := RTMondrian new.
-	view shape ellipse size: 15; color: Color red;  withText.
-	nodesToShow := view nodes: ast allChildren.
-	view edges
-		elements: nodesToShow asIdentityGroup;
-		connectFrom: #parent.
-	view layout tree.
 	
-	^ view	
+	shapes := ast allChildren collect: [ :cls |
+		lbl := RSLabel new
+			text: cls newSource;
+			yourself.
+		lps := RSEllipse new
+			withBorder.
+		RSComposite new
+			draggable;
+			model: cls;
+			shapes: (RSGroup with: lps with: lbl );
+			yourself 
+		
+		 ].
+	
+
+	c addAll: shapes.
+	
+	eb := RSEdgeBuilder line.
+	eb canvas: c.
+	eb connectFrom: #parent.
+	RSTreeLayout on: shapes.
+	shapes do: [ :e | e translateBy: 0 @ 0 ].
+	c @ RSDraggableCanvas.
+	^ c
 ]
 
 { #category : #'main methods' }
 GrdVisualize >> visualizeCFG [
-	| view |
-	view := RTMondrian new.
-	view shape rectangle withTextAbove; fillColor: Color white; borderColor: Color black.
-	self visitedTree;
-		  visitedNodes: view.
-	view shape arrowedLine.					
-	view edges connectTo: #nextNode.
-	view layout tree.
-	^ view 
+	| ast astv visitor c shapes eb eb2 lbl lps nodes|
+	c := RSCanvas new.
+	
+	ast := RBParser parseMethod: (GrdSample>>#justIfTrue) getSourceFromFile .
+	visitor := GrdVisitor  new.
+	astv := (ast acceptVisitor: visitor).
+	
+	nodes := astv allNodes.
+	
+	shapes :=  nodes collect: [ :cls |
+		lbl := RSLabel new
+			text: cls;
+			yourself.
+		lps := RSEllipse new
+			withBorder.
+		RSComposite new
+			draggable;
+			model: cls;
+			shapes: (RSGroup with: lps with: lbl );
+			yourself 
+		
+		 ].
+	
+
+	c addAll: shapes.
+	
+	eb := RSEdgeBuilder arrowedLine.
+	eb canvas: c.
+	eb connectFrom: #parent .
+	eb connectTo: #nextNode.
+
+
+	
+	RSClusterLayout on: shapes.
+	shapes do: [ :e | e translateBy: 0 @ 0 ].
+	c @ RSDraggableCanvas.
+	
+	^ c
 ]
