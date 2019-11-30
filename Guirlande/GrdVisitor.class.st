@@ -14,7 +14,8 @@ Class {
 	#name : #GrdVisitor,
 	#superclass : #RBProgramNodeVisitor,
 	#instVars : [
-		'node'
+		'node',
+		'inferer'
 	],
 	#classVars : [
 		'BinarySelectors',
@@ -49,10 +50,20 @@ GrdVisitor >> exitNode [
 	^ node exitNode
 ]
 
+{ #category : #accessing }
+GrdVisitor >> inferer [
+	^inferer
+]
+
+{ #category : #accessing }
+GrdVisitor >> inferer: anInferer [
+	inferer := anInferer
+]
+
 { #category : #initialization }
 GrdVisitor >> initialize [
 	super initialize.
-	node := GrdBodyNode new.
+	node := GrdChildishNode new.
 
 ]
 
@@ -147,19 +158,13 @@ GrdVisitor >> visitBinary: aNode [
 ]
 
 { #category : #visiting }
-GrdVisitor >> visitBlockNode: aNode [
+GrdVisitor >> visitBlockNode: aNode [ 
 
-	| block body |
+	| block |
 	
 	block := GrdBlockNode new.
-	body:= (GrdVisitor new) visitBodyNode: aNode body.
-	"block insertNode: body."
-	block addChild: body.
-	body parent: block.
+	block addChild: ( self visitBodyNode: aNode ).
 	block name: 'block'.
-	
-	"value := self visitNode: aNode arguments first."
-	
 	^ block
 	
 	
@@ -179,20 +184,48 @@ GrdVisitor >> visitBlockValueNode: aValueNode [
 ]
 
 { #category : #visiting }
-GrdVisitor >> visitBodyNode: aNode [
+GrdVisitor >> visitBodyNode: aNode [ 
 	
-	| b |
+	| b statements |
+	
 	b := GrdBodyNode new.
-	b insertChildren: (aNode statements collect: [:each | (self visitNode: each) ]).
+	statements := aNode statements.
+	( statements do: [:each |  (each class = RBMessageNode) 		
+				ifTrue:[ b addChild: (self visitMessageNode: each)]
+				ifFalse: [ b addChild: (self visitNode: each)]] ) .
 	b name: 'body'.
-	^ b
+	^ b 
+]
+
+{ #category : #visiting }
+GrdVisitor >> visitBodyNode: aNode at: entryPoints [
+	
+	| b methods messages statements childishNode tempNode|
+	messages := OrderedCollection new.
+	( inferer entryPoints collect: [:aMethodType| aMethodType messagesTypes]) do: [:each | messages addAll: each].
+	
+	methods := OrderedCollection new.
+	( messages collect:[:aMessageType| aMessageType methodTypes ]) do: [:each | methods addAll: each].
+	
+	b := GrdBodyNode new.
+	statements := aNode statements.
+	( statements do: [:each |  (each class = RBMessageNode) 		
+				ifTrue:[ tempNode := self visitMessageNode: each. (tempNode isNil)
+					ifFalse: [ b addChild: tempNode ]
+					ifTrue: [ 
+						childishNode := GrdChildishNode new. 
+						(messages select: [ :any | any message = each ]) do: [:all | all methodTypes do: [ :method| childishNode addChild: (self visitMethodNode: method node at: inferer entryPoints )]]. 
+						b addChild: childishNode]]
+				ifFalse: [ b addChild: (self visitNode: each)]] ) .
+	b name: 'body'.
+	^ b 
 ]
 
 { #category : #visiting }
 GrdVisitor >> visitCascadeNode: aCascadeNode [ 
 	|childishNode|
 	childishNode := GrdChildishNode new.
-	aCascadeNode messages do: [:each | childishNode addChild: (self visitNode: each)].
+	aCascadeNode messages do: [:each | childishNode addChild: (self visitMessageNode: each)].
 	^childishNode
 ]
 
@@ -347,8 +380,8 @@ GrdVisitor >> visitLiteralNode: aNode [
 
 { #category : #visiting }
 GrdVisitor >> visitMessageNode: aNode [
-	| childishNode|
-
+	| b methods messages childishNode|
+	
 	(self isControlFlowSelector: aNode selector)
 		ifTrue: [  ^ self perform: (self transformSelector: aNode selector) asSymbol with: aNode].
 
@@ -356,12 +389,21 @@ GrdVisitor >> visitMessageNode: aNode [
 		ifTrue: [  ^ self visitBinary: aNode].
 
 	(self isValueSelector: aNode selector) 
-		ifTrue: [ ^ self visitBlockValueNode: aNode ].
-	
+		ifTrue: [ ^ self visitBlockValueNode: aNode ].	
 			
-	childishNode := GrdChildishNode new.	
+	messages := OrderedCollection new.
+	( inferer entryPoints collect: [:aMethodType| aMethodType messagesTypes]) do: [:each | messages addAll: each].
+	
+	methods := OrderedCollection new.
+	( messages collect:[:aMessageType| aMessageType methodTypes ]) do: [:each | methods addAll: each].
+
+	childishNode := GrdChildishNode new.
+	
 	(aNode isCascaded not or: [aNode isFirstCascaded]) 
 		ifTrue: [ childishNode addChild: (self visitNode: aNode receiver)].
+	 
+	(messages select: [ :any | any message = aNode ]) do: [:all | all methodTypes do: [ :method| childishNode addChild: (self visitMethodNode: method node at: inferer entryPoints )]].			
+	 
 	aNode arguments do: [:each | childishNode addChild: (self visitNode: each)].
 	^ childishNode
 
@@ -371,11 +413,49 @@ GrdVisitor >> visitMessageNode: aNode [
 { #category : #visiting }
 GrdVisitor >> visitMethodNode: aMethodNode [ 
 	
-	| b |
+	| b block |
+	block := BlockClosure readFrom: '[',aMethodNode body sourceCode,']'.
+	"to do: make inferer a singleton"
+	(self inferer isNil & block isClean  ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
 	b := GrdBodyNode new.
-	b insertChildren: (aMethodNode body statements collect: [:each | (self visitNode: each) ]).
+	b addChild: ( self visitBodyNode: aMethodNode body)" at: inferer entryPoints".
 	b name: 'method name'.
-	^ b
+	^ b 
+]
+
+{ #category : #visiting }
+GrdVisitor >> visitMethodNode: aMethodNode at: entryPoints [
+	
+	| b block |
+	block := BlockClosure readFrom: '[',aMethodNode body sourceCode,']'.
+	"to do: make inferer a singleton"
+	(self inferer isNil ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
+	b := GrdBodyNode new.
+	b := self visitBodyNode: aMethodNode body at: inferer entryPoints.
+	b name: 'method name'.
+	^ b 
+]
+
+{ #category : #visiting }
+GrdVisitor >> visitRealKeywordMessageNode: aNode [ 
+	
+	| b methods messages statements childishNode|
+	messages := OrderedCollection new.
+	( inferer entryPoints collect: [:aMethodType| aMethodType messagesTypes]) do: [:each | messages addAll: each].
+	
+	methods := OrderedCollection new.
+	( messages collect:[:aMessageType| aMessageType methodTypes ]) do: [:each | methods addAll: each].
+	
+	b := GrdBodyNode new.
+	statements := aNode statements.
+	( statements do: [:each |  (each class = RBMessageNode) 		
+				ifTrue:[ childishNode := self visitMessageNode: each. 
+					( childishNode  isNil )
+						ifTrue: [ 
+					childishNode := GrdChildishNode new. (messages select: [ :any | any message = each ]) do: [:all | all methodTypes do: [ :method| childishNode addChild: (self visitMethodNode: method node at: inferer entryPoints )]]. b addChild: childishNode]]
+				ifFalse: [ b addChild: (self visitNode: each)]] ) .
+	b name: 'body'.
+	^ b 
 ]
 
 { #category : #visiting }

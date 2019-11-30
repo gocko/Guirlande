@@ -7,7 +7,7 @@ Class {
 { #category : #expressions }
 GrdSample >> addition [
 " - / \ * ~ < > = @ % | & ? , "
-	2+2
+	^2+2
 ]
 
 { #category : #expressions }
@@ -29,8 +29,8 @@ GrdSample >> blok2Value [
 
 { #category : #blocks }
 GrdSample >> blokAssignment [
-	|a|
-	^ a := [2].
+	|a |
+	a := [2]
 	
 ]
 
@@ -125,6 +125,11 @@ GrdSample >> loopDo [
 ]
 
 { #category : #selectors }
+GrdSample >> loopDo: aCollection [
+	aCollection do: [ :i |  i ]
+]
+
+{ #category : #selectors }
 GrdSample >> loopExample [
 	 #(1 2 3 4) from: 1 to: 4 do: [ :i |  i ]
 ]
@@ -144,15 +149,17 @@ GrdSample >> onlyArray [
 { #category : #accessing }
 GrdSample >> onlyAssignment [
 	|a|
-	^ a := 2.
+	a := 2.
 	
 ]
 
 { #category : #accessing }
 GrdSample >> onlyCascadeStatement [
-|date aStream|
-		date printOn: aStream format: #(3 2 1 $- 1 1 2);
-		printOn: aStream format: #(3 2 1 $- 1 1 2)
+|a|
+		
+a := 3
+a abs; gcd: 7
+
 	
 ]
 
@@ -164,7 +171,12 @@ GrdSample >> onlyConstant [
 
 { #category : #accessing }
 GrdSample >> onlyMethod [
- self today: 1 tommorow:2
+
+	| aNumber anotherNumber |  
+
+	aNumber := 3. 
+	anotherNumber  := 7. 
+	aNumber gcd: anotherNumber
 	
 ]
 
@@ -172,6 +184,12 @@ GrdSample >> onlyMethod [
 GrdSample >> onlyReturn [
 
 	^ 42
+]
+
+{ #category : #accessing }
+GrdSample >> onlyReturnMessageResult [
+
+	^ 42 abs 
 ]
 
 { #category : #accessing }
@@ -213,5 +231,6 @@ GrdSample >> subtraction [
 
 { #category : #accessing }
 GrdSample >> today:today tommorow: tommorow [
+^ today + tommorow
 
 ]

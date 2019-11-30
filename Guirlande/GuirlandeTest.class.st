@@ -18,10 +18,10 @@ GuirlandeTest >> testArray [
 
 	self visitSampleMethodNamed: #onlyArray.
 
-	self assert: visitor startNode nextNode class equals: GrdArrayNode.
+	self assert: visitor startNode nextNode class equals: GrdBodyNode.
 	self assert: visitor startNode nextNode nextNode isExit.
 	
-	
+self assert: visitor startNode nextNode startNode nextNode class equals: GrdArrayNode.	
 	
 ]
 
@@ -29,7 +29,7 @@ GuirlandeTest >> testArray [
 GuirlandeTest >> testAssignment [
 	| assignmentNode|
 	self visitSampleMethodNamed: #onlyAssignment.
-	assignmentNode := visitor startNode nextNode children at:2.
+	assignmentNode := visitor startNode nextNode startNode nextNode.
 	self assert: assignmentNode class equals: GrdAssignmentNode.
 	self assert: assignmentNode children size equals: 4.
 	self assert: (assignmentNode children at:2) class equals: GrdVariableNode.
@@ -44,17 +44,22 @@ GuirlandeTest >> testAssignment [
 GuirlandeTest >> testBlock [
 	|block|
 	self visitSampleMethodNamed: #block2.
-	block := visitor node startNode nextNode.
+	block := visitor node startNode nextNode startNode nextNode.
 	
-	self assert: visitor node class equals: GrdBodyNode.
+	self assert: visitor node startNode nextNode class equals: GrdBodyNode.
 	self assert: block class equals: GrdBlockNode.
 	self assert: (block children at:2 )class equals: GrdBodyNode.
 	self assert: block startNode nextNode nextNode class equals: GrdExitNode.
 	self assert: block nextNode class equals: GrdExitNode.
 	self assert: block children size equals: 3.
-	self assert: (block children at:2) class equals: GrdBodyNode.
-	self assert: (block children at:2) parent class equals: GrdBlockNode.
-	self assert: ((block children at:2) children at:2) class equals: GrdExpressionNode.
+	self assert: ((block children at:2) children at: 2) class equals: GrdExpressionNode.
+	"self assert: (block children at:2) parent class equals: GrdBodyNode."
+	self assert: (((block children at:2) children at: 2) children at: 1) class equals: GrdExpressionNode.
+	self assert: (((block children at:2) children at: 2) children at: 2) class equals: GrdOperatorNode.
+	self assert: (((block children at:2) children at: 2) children at: 3) class equals: GrdVariableNode.
+	self assert: ((((block children at:2) children at: 2) children at: 1) children at: 1) class equals: GrdVariableNode.
+	self assert: ((((block children at:2) children at: 2) children at: 1) children at: 2) class equals: GrdOperatorNode.
+	self assert: ((((block children at:2) children at: 2) children at: 1) children at: 1) class equals: GrdVariableNode.
 ]
 
 { #category : #'tests-blocks' }
@@ -79,7 +84,7 @@ GuirlandeTest >> testBlokAssignment [
 GuirlandeTest >> testBlokMoreValues [
 	|blockValueNode block body expression constant1 constant2|
 	self visitSampleMethodNamed: #blokMoreValues.
-	blockValueNode := visitor startNode nextNode.
+	blockValueNode := visitor startNode nextNode startNode nextNode.
 	block := blockValueNode children at:2.
 	body := block children at: 2.
 	constant1 := blockValueNode children at:3.
@@ -107,7 +112,7 @@ GuirlandeTest >> testBlokMoreValues [
 GuirlandeTest >> testBlokValue2 [
 	|blockValueNode block body expression constant|
 	self visitSampleMethodNamed: #blok2Value.
-	blockValueNode := visitor node startNode nextNode.
+	blockValueNode := visitor node startNode nextNode startNode nextNode.
 	block := blockValueNode children at:2.
 	body := block children at: 2.
 	constant := blockValueNode children at:3.
@@ -205,7 +210,7 @@ GuirlandeTest >> testExampleNew [
 GuirlandeTest >> testExpressionAddition [
 	| binaryNode  msgArg  msgReceiver msgSelector |
 	self visitSampleMethodNamed: #addition.
-	binaryNode := visitor startNode nextNode.
+	binaryNode := visitor startNode nextNode startNode nextNode startNode nextNode.
 	msgArg := binaryNode msgArg .
 	msgReceiver := binaryNode msgReceiver.
 	msgSelector := binaryNode msgSelector.
@@ -225,7 +230,7 @@ GuirlandeTest >> testExpressionAddition [
 GuirlandeTest >> testExpressionAnd [
 	| binaryNode  msgArg  msgReceiver msgSelector |
 	self visitSampleMethodNamed: #and.
-	binaryNode := visitor startNode nextNode.
+	binaryNode := visitor startNode nextNode startNode nextNode.
 	msgArg := binaryNode msgArg .
 	msgReceiver := binaryNode msgReceiver.
 	msgSelector := binaryNode msgSelector.
@@ -265,7 +270,7 @@ GuirlandeTest >> testExpressionConcatenationString [
 GuirlandeTest >> testExpressionMultiplication [
 	| binaryNode  msgArg  msgReceiver  msgSelector |
 	self visitSampleMethodNamed: #multiplication.
-	binaryNode := visitor startNode nextNode.
+	binaryNode := visitor startNode nextNode startNode nextNode.
 	msgArg := binaryNode msgArg .
 	msgReceiver := binaryNode msgReceiver.
 	msgSelector := binaryNode msgSelector.
@@ -285,7 +290,7 @@ GuirlandeTest >> testExpressionMultiplication [
 GuirlandeTest >> testExpressionSubtraction [
 	| binaryNode  msgArg  msgReceiver  msgSelector |
 	self visitSampleMethodNamed: #subtraction.
-		binaryNode := visitor startNode nextNode.
+		binaryNode := visitor startNode nextNode startNode nextNode.
 	msgArg := binaryNode msgArg .
 	msgReceiver := binaryNode msgReceiver.
 	msgSelector := binaryNode msgSelector.
@@ -460,15 +465,43 @@ GuirlandeTest >> testMethodControlFlowHasAnExitNode [
 
 { #category : #tests }
 GuirlandeTest >> testOnlyMethod [
-	| childisNode   |
+	| childishNode   |
 	self visitSampleMethodNamed: #onlyMethod.
-	childisNode := visitor startNode nextNode.
-	self assert: visitor startNode nextNode nextNode isExit.
-	self assert: childisNode class equals: GrdChildishNode.
-	self assert: childisNode children size equals:5.
-	self assert: (childisNode children at:2) class equals: GrdVariableNode.
-	self assert: (childisNode children at:3) class equals: GrdConstantNode.
-	self assert: (childisNode children at:4) class equals: GrdConstantNode.
+	childishNode := visitor node startNode nextNode.
+	self assert: childishNode class equals: GrdBodyNode.
+	self assert: childishNode children size equals: 5.
+	self assert: (childishNode children at:2) class equals: GrdAssignmentNode.
+	self assert: (childishNode children at:3) class equals: GrdAssignmentNode.
+	self assert: (childishNode children at:4) class equals: GrdChildishNode.
+	self assert: ((childishNode children at:4) children at: 3) class equals: GrdBodyNode.
+	self assert: (((childishNode children at:4) children at: 3) children at: 1) class equals: GrdStartNode.
+	self assert: (((childishNode children at:4) children at: 3) children at: 2) class equals: GrdAssignmentNode.
+	self assert: (((childishNode children at:4) children at: 3) children at: 3) class equals: GrdAssignmentNode.
+	self assert: (((childishNode children at:4) children at: 3) children at: 4) class equals: GrdChildishNode.
+	self assert: (((childishNode children at:4) children at: 3) children at: 5) class equals: GrdReturnNode.
+	self assert: ((((childishNode children at:4) children at: 3) children at: 5) children at: 2) class equals: GrdChildishNode.
+	self assert: (((childishNode children at:4) children at: 3) children at: 6) class equals: GrdExitNode.
+	
+]
+
+{ #category : #'tests-utilities' }
+GuirlandeTest >> testOnlyReturn [
+	self visitSampleMethodNamed: #onlyReturn.
+	self assert: visitor startNode class equals: GrdStartNode.
+	self assert: visitor startNode nextNode class equals: GrdBodyNode.
+	self assert: visitor startNode nextNode startNode nextNode class equals: GrdReturnNode.
+]
+
+{ #category : #'tests-utilities' }
+GuirlandeTest >> testOnlyReturnMessageResult [
+	self visitSampleMethodNamed: #onlyReturnMessageResult.
+	self assert: visitor startNode class equals: GrdStartNode.
+	self assert: visitor startNode nextNode class equals: GrdBodyNode.
+	self assert: visitor startNode nextNode startNode nextNode class equals: GrdReturnNode.
+	self assert: visitor startNode nextNode startNode nextNode startNode nextNode class equals: GrdChildishNode.	
+	self assert: visitor startNode nextNode startNode nextNode startNode nextNode startNode nextNode class equals: GrdBodyNode.	
+	
+	
 ]
 
 { #category : #tests }
@@ -609,7 +642,8 @@ GuirlandeTest >> testTransformSelector [
 GuirlandeTest >> testVisitorIsWorking [
 	self visitSampleMethodNamed: #onlyReturn.
 	self assert: visitor startNode class equals: GrdStartNode.
-	self assert: ({ GrdReturnNode . GrdExitNode } includes: visitor startNode nextNode class ) ""
+	self assert: visitor startNode nextNode class equals: GrdBodyNode.
+	self assert: ({ GrdStartNode . GrdBodyNode . GrdReturnNode . GrdExitNode } includes: visitor startNode nextNode class ) ""
 ]
 
 { #category : #initialization }
