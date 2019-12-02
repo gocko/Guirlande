@@ -18,10 +18,10 @@ GuirlandeTest >> testArray [
 
 	self visitSampleMethodNamed: #onlyArray.
 
-	self assert: visitor startNode nextNode class equals: GrdBodyNode.
-	self assert: visitor startNode nextNode nextNode isExit.
+	self assert: visitor node class equals: GrdBodyNode.
+	self assert: visitor node startNode nextNode class equals: GrdArrayNode.	
+	self assert: visitor node startNode nextNode nextNode isExit.
 	
-self assert: visitor startNode nextNode startNode nextNode class equals: GrdArrayNode.	
 	
 ]
 
@@ -29,7 +29,7 @@ self assert: visitor startNode nextNode startNode nextNode class equals: GrdArra
 GuirlandeTest >> testAssignment [
 	| assignmentNode|
 	self visitSampleMethodNamed: #onlyAssignment.
-	assignmentNode := visitor startNode nextNode startNode nextNode.
+	assignmentNode := visitor node startNode nextNode.
 	self assert: assignmentNode class equals: GrdAssignmentNode.
 	self assert: assignmentNode children size equals: 4.
 	self assert: (assignmentNode children at:2) class equals: GrdVariableNode.
@@ -44,9 +44,9 @@ GuirlandeTest >> testAssignment [
 GuirlandeTest >> testBlock [
 	|block|
 	self visitSampleMethodNamed: #block2.
-	block := visitor node startNode nextNode startNode nextNode.
+	block := visitor node startNode nextNode .
 	
-	self assert: visitor node startNode nextNode class equals: GrdBodyNode.
+	self assert: visitor node class equals: GrdBodyNode.
 	self assert: block class equals: GrdBlockNode.
 	self assert: (block children at:2 )class equals: GrdBodyNode.
 	self assert: block startNode nextNode nextNode class equals: GrdExitNode.
@@ -66,7 +66,7 @@ GuirlandeTest >> testBlock [
 GuirlandeTest >> testBlokAssignment [
 	| assignmentNode block body constant|
 	self visitSampleMethodNamed: #blokAssignment.
-	assignmentNode := visitor startNode nextNode children at:2.
+	assignmentNode := visitor node startNode nextNode .
 	block := assignmentNode children at:3.
 	body := block children at:2.
 	constant := body children at:2.
@@ -84,7 +84,7 @@ GuirlandeTest >> testBlokAssignment [
 GuirlandeTest >> testBlokMoreValues [
 	|blockValueNode block body expression constant1 constant2|
 	self visitSampleMethodNamed: #blokMoreValues.
-	blockValueNode := visitor startNode nextNode startNode nextNode.
+	blockValueNode := visitor node startNode nextNode.
 	block := blockValueNode children at:2.
 	body := block children at: 2.
 	constant1 := blockValueNode children at:3.
@@ -112,7 +112,7 @@ GuirlandeTest >> testBlokMoreValues [
 GuirlandeTest >> testBlokValue2 [
 	|blockValueNode block body expression constant|
 	self visitSampleMethodNamed: #blok2Value.
-	blockValueNode := visitor node startNode nextNode startNode nextNode.
+	blockValueNode := visitor node startNode nextNode .
 	block := blockValueNode children at:2.
 	body := block children at: 2.
 	constant := blockValueNode children at:3.
@@ -210,7 +210,7 @@ GuirlandeTest >> testExampleNew [
 GuirlandeTest >> testExpressionAddition [
 	| binaryNode  msgArg  msgReceiver msgSelector |
 	self visitSampleMethodNamed: #addition.
-	binaryNode := visitor startNode nextNode startNode nextNode startNode nextNode.
+	binaryNode := visitor node startNode nextNode startNode nextNode.
 	msgArg := binaryNode msgArg .
 	msgReceiver := binaryNode msgReceiver.
 	msgSelector := binaryNode msgSelector.
@@ -230,7 +230,7 @@ GuirlandeTest >> testExpressionAddition [
 GuirlandeTest >> testExpressionAnd [
 	| binaryNode  msgArg  msgReceiver msgSelector |
 	self visitSampleMethodNamed: #and.
-	binaryNode := visitor startNode nextNode startNode nextNode.
+	binaryNode := visitor node startNode nextNode.
 	msgArg := binaryNode msgArg .
 	msgReceiver := binaryNode msgReceiver.
 	msgSelector := binaryNode msgSelector.
@@ -250,7 +250,7 @@ GuirlandeTest >> testExpressionAnd [
 GuirlandeTest >> testExpressionConcatenationString [
 	| binaryNode  msgArg  msgReceiver  msgSelector |
 	self visitSampleMethodNamed: #concatenationString.
-	binaryNode := visitor startNode nextNode.
+	binaryNode := visitor node startNode nextNode.
 	msgArg := binaryNode msgArg .
 	msgReceiver := binaryNode msgReceiver.
 	msgSelector := binaryNode msgSelector.
@@ -290,7 +290,7 @@ GuirlandeTest >> testExpressionMultiplication [
 GuirlandeTest >> testExpressionSubtraction [
 	| binaryNode  msgArg  msgReceiver  msgSelector |
 	self visitSampleMethodNamed: #subtraction.
-		binaryNode := visitor startNode nextNode startNode nextNode.
+	binaryNode := visitor node startNode nextNode.
 	msgArg := binaryNode msgArg .
 	msgReceiver := binaryNode msgReceiver.
 	msgSelector := binaryNode msgSelector.
@@ -346,7 +346,7 @@ GuirlandeTest >> testJustIfFalse [
 	| singleBranchNode condition ifMethod ifBody|
 	self visitSampleMethodNamed: #justIfFalse.
 	
-	singleBranchNode := visitor startNode nextNode startNode nextNode.
+	singleBranchNode := visitor node startNode nextNode.
 	condition := singleBranchNode startNode nextNode.
 	ifMethod := condition nextNode.
 	ifBody := ifMethod nextNode.
@@ -369,7 +369,7 @@ GuirlandeTest >> testJustIfFalseIfTrue [
 	| singleBranchNode condition ifMethod trueBlock falseBlock|
 	self visitSampleMethodNamed: #justIfFalseIfTrue.
 	
-	singleBranchNode := visitor startNode nextNode startNode nextNode.
+	singleBranchNode := visitor node startNode nextNode.
 	condition := singleBranchNode startNode nextNode.
 	ifMethod := condition nextNode.
 	falseBlock := ifMethod nextNode.
@@ -397,7 +397,7 @@ GuirlandeTest >> testJustIfTrue [
 | condition singleBranchNode ifMethod ifBranch|
 	self visitSampleMethodNamed: #justIfTrue.
 	
-	singleBranchNode := visitor startNode nextNode startNode nextNode.
+	singleBranchNode := visitor node startNode nextNode.
 	condition := singleBranchNode children at: 2.
 	ifMethod := singleBranchNode children at: 3.
 	ifBranch := singleBranchNode children at: 4.
@@ -508,7 +508,7 @@ GuirlandeTest >> testJustIfTrueIfFalse [
 	| singleBranchNode condition ifMethod trueBlock falseBlock|
 	self visitSampleMethodNamed: #justIfTrueIfFalse.
 	
-	singleBranchNode := visitor startNode nextNode startNode nextNode.
+	singleBranchNode := visitor node startNode nextNode.
 	condition := singleBranchNode startNode nextNode.
 	ifMethod := condition nextNode.
 	trueBlock := ifMethod nextNode.
@@ -544,7 +544,7 @@ GuirlandeTest >> testMethodControlFlowHasAnExitNode [
 GuirlandeTest >> testOnlyMethod [
 	| childishNode   |
 	self visitSampleMethodNamed: #onlyMethod.
-	childishNode := visitor node startNode nextNode.
+	childishNode := visitor node .
 	self assert: childishNode class equals: GrdBodyNode.
 	self assert: childishNode children size equals: 5.
 	self assert: (childishNode children at:2) class equals: GrdAssignmentNode.
@@ -564,41 +564,19 @@ GuirlandeTest >> testOnlyMethod [
 { #category : #'tests-utilities' }
 GuirlandeTest >> testOnlyReturn [
 	self visitSampleMethodNamed: #onlyReturn.
-	self assert: visitor startNode class equals: GrdStartNode.
-	self assert: visitor startNode nextNode class equals: GrdBodyNode.
-	self assert: visitor startNode nextNode startNode nextNode class equals: GrdReturnNode.
+	self assert: visitor node startNode class equals: GrdStartNode.
+	self assert: visitor node class equals: GrdBodyNode.
+	self assert: visitor node startNode nextNode class equals: GrdReturnNode.
 ]
 
 { #category : #'tests-utilities' }
 GuirlandeTest >> testOnlyReturnMessageResult [
 	self visitSampleMethodNamed: #onlyReturnMessageResult.
-	self assert: visitor startNode class equals: GrdStartNode.
-	self assert: visitor startNode nextNode class equals: GrdBodyNode.
-	self assert: visitor startNode nextNode startNode nextNode class equals: GrdReturnNode.
-	self assert: visitor startNode nextNode startNode nextNode startNode nextNode class equals: GrdChildishNode.	
-	self assert: visitor startNode nextNode startNode nextNode startNode nextNode startNode nextNode class equals: GrdBodyNode.	
-	
-	
-]
-
-{ #category : #tests }
-GuirlandeTest >> testPureOneBranch [
-	| condition singleBranchNode ifMethod ifBranch|
-	self visitSampleMethodNamed: #justIfTrue.
-	
-	singleBranchNode := visitor startNode nextNode startNode nextNode.
-	condition := singleBranchNode children at: 2.
-	ifMethod := singleBranchNode children at: 3.
-	ifBranch := singleBranchNode children at: 4.
-	
-	self assert: singleBranchNode class equals:  GrdChildishNode.
-	self assert: singleBranchNode nextNode isExit.
-	self assert: condition class equals: GrdConstantNode.
-	self assert: ifBranch class equals: GrdBlockNode.
-	self assert: singleBranchNode children size equals: 5.
-	self assert: ifBranch children size equals: 3.
-	self assert: (ifBranch children at:2 ) class equals: GrdBodyNode.
-	self assert: (ifBranch children at:2 ) startNode nextNode class equals: GrdConstantNode 
+	self assert: visitor node startNode class equals: GrdStartNode.
+	self assert: visitor node class equals: GrdBodyNode.
+	self assert: visitor node startNode nextNode class equals: GrdReturnNode.
+	self assert: visitor node startNode nextNode startNode nextNode class equals: GrdChildishNode.	
+	self assert: visitor node startNode nextNode startNode nextNode startNode nextNode class equals: GrdBodyNode.	
 	
 	
 ]
@@ -700,8 +678,8 @@ GuirlandeTest >> testPureReturnOneBranch [
 GuirlandeTest >> testReturnIsTheEndOfControlFlow [
 		
 	self visitSampleMethodNamed: #onlyReturn.
-	self assert: visitor startNode nextNode class equals: GrdBodyNode.
-	self assert: visitor startNode nextNode nextNode isExit 
+	self assert: visitor node class equals: GrdBodyNode.
+	self assert: visitor node startNode nextNode nextNode isExit 
 	
 	
 ]
@@ -717,8 +695,8 @@ GuirlandeTest >> testTransformSelector [
 { #category : #'tests-utilities' }
 GuirlandeTest >> testVisitorIsWorking [
 	self visitSampleMethodNamed: #onlyReturn.
-	self assert: visitor startNode class equals: GrdStartNode.
-	self assert: visitor startNode nextNode class equals: GrdBodyNode.
+	self assert: visitor node startNode class equals: GrdStartNode.
+	self assert: visitor node class equals: GrdBodyNode.
 	self assert: ({ GrdStartNode . GrdBodyNode . GrdReturnNode . GrdExitNode } includes: visitor startNode nextNode class ) ""
 ]
 

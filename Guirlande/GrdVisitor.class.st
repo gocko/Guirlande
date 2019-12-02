@@ -417,9 +417,9 @@ GrdVisitor >> visitMethodNode: aMethodNode [
 	block := BlockClosure readFrom: '[',aMethodNode body sourceCode,']'.
 	"to do: make inferer a singleton"
 	(self inferer isNil & block isClean  ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
-	b := GrdBodyNode new.
-	b addChild: ( self visitBodyNode: aMethodNode body)" at: inferer entryPoints".
-	b name: aMethodNode selector asString .
+
+	b :=  self visitBodyNode: aMethodNode body.
+	b name: 'Method ' , aMethodNode selector asString .
 	^ b 
 ]
 
