@@ -2,7 +2,6 @@ Class {
 	#name : #GrdNode,
 	#superclass : #Object,
 	#instVars : [
-		'rawNode',
 		'parent',
 		'children',
 		'nextNode',

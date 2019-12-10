@@ -1,11 +1,11 @@
 Class {
-	#name : #GrdVisualize,
+	#name : #GrdVisualizer,
 	#superclass : #Object,
 	#category : #Guirlande
 }
 
 { #category : #visualization }
-GrdVisualize >> hasChildBody:n show:view flag:flag visitor: visitor [
+GrdVisualizer >> hasChildBody:n show:view flag:flag visitor: visitor [
 	|astv  |
 	astv := self visitedTree.
 	view nodes: n children forEach: [ : c | 
@@ -29,7 +29,7 @@ GrdVisualize >> hasChildBody:n show:view flag:flag visitor: visitor [
 ]
 
 { #category : #visualization }
-GrdVisualize >> showColors:flag node: c view:view visitor:visitor [	
+GrdVisualizer >> showColors:flag node: c view:view visitor:visitor [	
 	(flag ==1) ifTrue:[view shape rectangle fillColor: Color yellow;  withTextAbove.
 							self hasChildBody:c show: view flag: 2 visitor: visitor.].
 	(flag == 2) ifTrue:[view shape rectangle fillColor: Color green;  withTextAbove.
@@ -39,7 +39,7 @@ GrdVisualize >> showColors:flag node: c view:view visitor:visitor [
 ]
 
 { #category : #visualization }
-GrdVisualize >> visitedTree [
+GrdVisualizer >> visitedTree [
 	| ast visitor astv|
 	ast := RBParser parseMethod: (GrdSample>>#justIfTrueFalseBlokIf) getSourceFromFile .
 	visitor := GrdVisitor new.
@@ -48,7 +48,7 @@ GrdVisualize >> visitedTree [
 ]
 
 { #category : #'main methods' }
-GrdVisualize >> visualizeAST [ 
+GrdVisualizer >> visualizeAST [ 
 | ast astv visitor c shapes eb lbl lps|
 	c := RSCanvas new.
 	
@@ -84,11 +84,11 @@ GrdVisualize >> visualizeAST [
 ]
 
 { #category : #'main methods' }
-GrdVisualize >> visualizeCFG [
+GrdVisualizer >> visualizeCFG [
 	| ast astv visitor c shapes eb eb2 lbl lps nodes|
 	c := RSCanvas new.
 	
-	ast := RBParser parseMethod: (GrdSample>>#justIfTrue) getSourceFromFile .
+	ast := RBParser parseMethod: (GrdSample>>#justIfTrueInIfTrue) getSourceFromFile .
 	visitor := GrdVisitor  new.
 	astv := (ast acceptVisitor: visitor).
 	
@@ -96,7 +96,7 @@ GrdVisualize >> visualizeCFG [
 	
 	shapes :=  nodes collect: [ :cls |
 		lbl := RSLabel new
-			text: cls;
+			text: cls ;
 			yourself.
 		lps := RSEllipse new
 			withBorder.
@@ -118,7 +118,7 @@ GrdVisualize >> visualizeCFG [
 
 
 	
-	RSClusterLayout on: shapes.
+	RSTreeLayout on: shapes.
 	shapes do: [ :e | e translateBy: 0 @ 0 ].
 	c @ RSDraggableCanvas.
 	

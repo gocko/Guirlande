@@ -138,6 +138,11 @@ GrdSample >> justIfTrueIfFalse [
 ]
 
 { #category : #selectors }
+GrdSample >> justIfTrueInIfTrue [
+	true ifTrue:[ false ifTrue: [true]]
+]
+
+{ #category : #selectors }
 GrdSample >> loopDo [
 	#( 15 19 10) do: [ :i |  i ]
 ]
