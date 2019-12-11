@@ -85,10 +85,10 @@ GrdVisualizer >> visualizeAST [
 
 { #category : #'main methods' }
 GrdVisualizer >> visualizeCFG [
-	| ast astv visitor c shapes eb eb2 lbl lps nodes|
+	| ast astv visitor c shapes eb lbl lps nodes|
 	c := RSCanvas new.
 	
-	ast := RBParser parseMethod: (GrdSample>>##justWhileTrue) getSourceFromFile .
+	ast := RBParser parseMethod: (GrdSample>>##justIfTrueIfFalse) getSourceFromFile .
 	visitor := GrdVisitor  new.
 	astv := (ast acceptVisitor: visitor).
 	
@@ -122,6 +122,6 @@ GrdVisualizer >> visualizeCFG [
 	shapes do: [ :e | e translateBy: 0 @ 0 ].
 	c @ RSDraggableCanvas.
 	c zoomToFit .
-	
+	c camera scale: 1.	
 	^ c
 ]
