@@ -20,7 +20,8 @@ Class {
 	],
 	#classVars : [
 		'BinarySelectors',
-		'ControlFlowSelectors'
+		'ControlFlowSelectors',
+		'CoreSelectors'
 	],
 	#category : #Guirlande
 }
@@ -31,6 +32,7 @@ GrdVisitor class >> initialize [
 
 	self initializeControlFlowSelectors.
 	self initializeBinarySelectors.
+	self initializeCoreSelectors 
 ]
 
 { #category : #initialization }
@@ -355,6 +357,9 @@ GrdVisitor >> visitLiteralNode: aNode [
 GrdVisitor >> visitMessageNode: aNode [
 	| block entryPoint |
 
+	(aNode selector = #subclassResponsibility)
+		ifTrue: [ ^ GrdDesignChoiceNode new name: 'subclassResponsibility' ].
+
 	(self isControlFlowSelector: aNode selector)
 		ifTrue: [  ^ self perform: (self transformSelector: aNode selector) asSymbol with: aNode].
 
@@ -363,8 +368,10 @@ GrdVisitor >> visitMessageNode: aNode [
 
 	(self isValueSelector: aNode selector) 
 		ifTrue: [ ^ self visitBlockValueNode: aNode ].	
-	(aNode selector = #subclassResponsibility)
-		ifTrue: [ ^ GrdDesignChoiceNode new name: 'subclassResponsibility' ].
+
+	(self isCoreSelector: aNode selector) 
+		ifTrue: [ ^ GrdCoreMethodNode new name: 'core method' ]..	
+	
 
 	self flag: 'clean all these dirty places'.
 	self inferer isNil ifTrue:[

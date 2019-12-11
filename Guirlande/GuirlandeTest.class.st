@@ -666,18 +666,16 @@ GuirlandeTest >> testPureReturnOneBranch [
 	
 	singleBranchNode := visitor startNode nextNode children at:2.
 	condition := singleBranchNode children at: 2 .
-	ifMethod := singleBranchNode children at: 3.	
-	ifBranch := singleBranchNode children at: 4.
+	ifBranch := singleBranchNode children at: 3.
 	
 	self assert: visitor startNode nextNode isReturn.
 	self assert: visitor startNode nextNode nextNode isExit.
-	self assert: singleBranchNode class equals: GrdChildishNode.
+	self assert: singleBranchNode class equals: GrdSingleBranchNode.
 	self assert: condition class equals:  GrdConstantNode.
 	self assert: ifBranch class equals:  GrdBlockNode.
-	self assert: ifMethod class equals:  GrdBodyNode.
-	self assert: singleBranchNode children size equals: 5.
-	self assert: condition parent class equals: GrdChildishNode.
-	self assert: ifBranch parent class equals: GrdChildishNode.
+	self assert: singleBranchNode children size equals: 4.
+	self assert: condition parent class equals: GrdSingleBranchNode.
+	self assert: ifBranch parent class equals: GrdSingleBranchNode.
 	self assert: ifBranch children size equals: 3.
 		
 		
