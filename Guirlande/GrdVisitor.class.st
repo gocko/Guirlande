@@ -227,27 +227,18 @@ GrdVisitor >> visitCascadeNode: aCascadeNode [
 
 { #category : #'visiting control selectors' }
 GrdVisitor >> visitIfFalse: aNode [
-	| conditionNode cond if |
-	self flag: #somewrong. "is iffalse a if branch or would not be better to have it as a elseBranch. 
-	do we make the distinction."
-	
+	| conditionNode cond method if |
 	conditionNode := GrdSingleBranchNode new.
 	cond := self visitNode: aNode receiver.
+	method := GrdCoreMethodNode new name: 'ifFalse:'.
 	if := self visitBlockNode: aNode arguments first.
 	conditionNode name: 'ifFalse node'.
-	
-	cond nextNode: if.
-	if previousNode: cond.
-	
+
 	conditionNode addChild: cond.
+	conditionNode addChild: method.
 	conditionNode addChild: if.
-	
-	cond parent: conditionNode.
-	if parent: conditionNode.
-	
+		
 	^ conditionNode
-		condition: cond;
-		ifBranch: if
 ]
 
 { #category : #'visiting control selectors' }
@@ -285,24 +276,19 @@ self flag: 'we are not going to need this'.
 
 { #category : #'visiting control selectors' }
 GrdVisitor >> visitIfTrue: aNode [
-	| conditionNode cond if |
+	| conditionNode cond method if |
 	conditionNode := GrdSingleBranchNode new.
 	cond := self visitNode: aNode receiver.
+	method := GrdCoreMethodNode new name: 'ifTrue:'.
 	if := self visitBlockNode: aNode arguments first.
 	conditionNode name: 'ifTrue node'.
 
-	cond nextNode: if.
-	if previousNode: cond.
-
 	conditionNode addChild: cond.
+	conditionNode addChild: method.
 	conditionNode addChild: if.
-	
-	cond parent: conditionNode.
-	if parent: conditionNode.
-	
+		
 	^ conditionNode
-		condition: cond;
-		ifBranch: if
+		
 ]
 
 { #category : #'visiting control selectors' }
@@ -373,15 +359,17 @@ GrdVisitor >> visitMessageNode: aNode [
 GrdVisitor >> visitMessageNode: aNode at: entryPoint [
 	| methodsInvoked childishNode messageType |
 	
-	messageType := entryPoint getMessageType: aNode.
-	methodsInvoked  := messageType methodTypes array.
-
+	
 	childishNode := GrdChildishNode new.
 	
 	(aNode isCascaded not or: [aNode isFirstCascaded]) 
 		ifTrue: [ childishNode addChild: (self visitNode: aNode receiver)].
-	 
-	methodsInvoked do: [:each | each notNil ifTrue: [childishNode addChild: (self visitMethodNode: each node at: each) ]].			
+
+	[messageType := self inferer messageTypeFromNode: aNode .
+	methodsInvoked  := messageType methodTypes array. 
+	methodsInvoked do: [:each | each notNil ifTrue: [childishNode addChild: (self visitMethodNode: each node at: each) ]]			
+	] on: Error do: [childishNode addChild: (GrdUndefinedMessageNode new name: aNode selector asString)].
+	
 	 
 	aNode arguments do: [:each | childishNode addChild: (self visitNode: each)].
 	^ childishNode
@@ -484,42 +472,29 @@ self flag: 'we are not going to need this. Replace by whileTrue'.
 	loopNode name: 'whileTrue node'.
 
 	loopNode addChild: collectionReceiver.
+	loopNode addChild: (GrdCoreMethodNode new name: 'whileFalse:').
 	loopNode addChild: blockArg.
 	
-	collectionReceiver nextNode: blockArg.
-	blockArg previousNode: collectionReceiver.
-	blockArg nextNode: collectionReceiver. " povratna sprega "
-	
-	collectionReceiver parent: loopNode.
-	blockArg parent: loopNode.
-	
+	loopNode exitNode nextNode: loopNode startNode.
 	^ loopNode
 		
 ]
 
 { #category : #'visiting control selectors' }
 GrdVisitor >> visitWhileTrue: aNode [
-	| loopNode collectionReceiver blockArg bodyOfBlock exitOfBody |
-	
-self flag: 'we are not going to need this. Replace by whileTrue'.
+	| loopNode collectionReceiver blockArg bodyOfBlock  |
 
 	loopNode := GrdLoopNode new.
 	collectionReceiver := self visitNode: aNode receiver.
 	blockArg := self visitBlockNode: (aNode arguments) first.
 	bodyOfBlock := (blockArg children at:2).
-   exitOfBody := (bodyOfBlock children at:2) nextNode .
 	loopNode name: 'whileTrue node'.
 
+
 	loopNode addChild: collectionReceiver.
+	loopNode addChild: (GrdCoreMethodNode new name: 'whileTrue:').
 	loopNode addChild: blockArg.
 	
-	collectionReceiver nextNode: blockArg.
-	blockArg previousNode: collectionReceiver.
-	blockArg nextNode: collectionReceiver. " povratna sprega "
-	
-	collectionReceiver parent: loopNode.
-	blockArg parent: loopNode.
-	
+	loopNode exitNode nextNode: loopNode startNode.
 	^ loopNode
-		
 ]

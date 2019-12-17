@@ -153,6 +153,15 @@ GrdSample >> loopDo: aCollection [
 ]
 
 { #category : #selectors }
+GrdSample >> loopDoWithAnCollectionInit [
+	| aCollection allItemsNil |
+	aCollection := OrderedCollection new: 5.
+	allItemsNil := true.
+	aCollection do: [ :each |  allItemsNil & each isNil ].
+	^ allItemsNil
+]
+
+{ #category : #selectors }
 GrdSample >> loopExample [
 	 #(1 2 3 4) from: 1 to: 4 do: [ :i |  i ]
 ]
@@ -265,4 +274,24 @@ GrdSample >> subtraction [
 GrdSample >> today:today tommorow: tommorow [
 ^ today + tommorow
 
+]
+
+{ #category : #selectors }
+GrdSample >> whileFalse [
+	| n sum|
+	n := 5.
+	sum := 0.
+	[n < 1] whileFalse: [ sum := sum + n. n := n - 1 ].
+	^ sum
+	 
+]
+
+{ #category : #selectors }
+GrdSample >> whileTrue [
+	| n sum|
+	n := 5.
+	sum := 0.
+	[n > 0] whileTrue: [ sum := sum + n. n := n - 1 ].
+	^ sum
+	 
 ]
