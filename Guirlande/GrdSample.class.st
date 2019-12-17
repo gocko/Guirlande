@@ -18,7 +18,7 @@ GrdSample >> and [
 
 { #category : #blocks }
 GrdSample >> block2 [
-	[ :a :b |  a = 2 + b]
+	[ :a :b |  a = 2 + b] 
 ]
 
 { #category : #blocks }

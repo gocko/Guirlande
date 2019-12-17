@@ -206,12 +206,12 @@ GrdVisitor >> visitBodyNode: aNode [
 { #category : #visiting }
 GrdVisitor >> visitBodyNode: aNode at: entryPoints [
 	
-	| b statements |
+	| b statements temp|
 	
 	b := GrdBodyNode new.
 	statements := aNode statements.
 	( statements do: [:each |  (each class = RBMessageNode) 		
-				ifTrue:[ b addChild: (self visitMessageNode: each at: entryPoints)]
+				ifTrue:[ temp := self visitNoninferringMessageNode: each. temp isNil ifFalse: [b addChild: temp] ifTrue: [b addChild: (self visitMessageNode: each at: entryPoints)]]
 				ifFalse: [ b addChild: (self visitNode: each)]] ) .
 	b name: 'body'.
 	^ b 
@@ -355,56 +355,24 @@ GrdVisitor >> visitLiteralNode: aNode [
 
 { #category : #visiting }
 GrdVisitor >> visitMessageNode: aNode [
-	| block entryPoint |
+	| resultNode entryPoint |
 
-	(aNode selector = #subclassResponsibility)
-		ifTrue: [ ^ GrdDesignChoiceNode new name: 'subclassResponsibility' ].
-
-	(self isControlFlowSelector: aNode selector)
-		ifTrue: [  ^ self perform: (self transformSelector: aNode selector) asSymbol with: aNode].
-
-	(self isBinarySelector: aNode selector)
-		ifTrue: [  ^ self visitBinary: aNode].
-
-	(self isValueSelector: aNode selector) 
-		ifTrue: [ ^ self visitBlockValueNode: aNode ].	
-
-	
-
+	resultNode := self visitNoninferringMessageNode: aNode.
+	resultNode isNil ifFalse: [ ^ resultNode].
+		
 	self flag: 'clean all these dirty places'.
-	self inferer isNil ifTrue:[
-		block := BlockClosure readFrom: '[',aNode sourceCode,']'.
-			"to do: make inferer a singleton"
-		(block isClean  ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ]].
+	self inferer isNil ifTrue:[ self inferer: PhineasInferer new. self inferer infer:  aNode ].
 	
-	entryPoint := ((inferer typeProvider messageTypes) detect: [:messageType | messageType message = aNode]) methodType .
-	^self visitMessageNode: aNode at: entryPoint 
+	[entryPoint := ((inferer typeProvider messageTypes) detect: [:messageType | messageType message = aNode]) methodType ]
+		on: Error do: [^ GrdUndefinedMessageNode new name: aNode selector asString].
+	
+	^ self visitMessageNode: aNode at: entryPoint 
 ]
 
 { #category : #visiting }
 GrdVisitor >> visitMessageNode: aNode at: entryPoint [
-	| block methodsInvoked childishNode messageType |
+	| methodsInvoked childishNode messageType |
 	
-
-
-	(self isControlFlowSelector: aNode selector)
-		ifTrue: [  ^ self perform: (self transformSelector: aNode selector) asSymbol with: aNode].
-
-	(self isBinarySelector: aNode selector)
-		ifTrue: [  ^ self visitBinary: aNode].
-
-	(self isValueSelector: aNode selector) 
-		ifTrue: [ ^ self visitBlockValueNode: aNode ].	
-
-	(aNode selector = #subclassResponsibility)
-		ifTrue: [ ^ GrdDesignChoiceNode new name: 'subclassResponsibility' ].
-
-
-	self flag: 'clean all these dirty places'.
-	block := BlockClosure readFrom: '[',aNode sourceCode,']'.
-			"to do: make inferer a singleton"
-	(self inferer isNil & block isClean  ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
-
 	messageType := entryPoint getMessageType: aNode.
 	methodsInvoked  := messageType methodTypes array.
 
@@ -424,16 +392,26 @@ GrdVisitor >> visitMessageNode: aNode at: entryPoint [
 { #category : #visiting }
 GrdVisitor >> visitMethodNode: aMethodNode [ 
 	
-	| b block |
-	self flag: 'clean all these dirty places'.
-	block := BlockClosure readFrom: '[',aMethodNode body sourceCode,']'.
-			"to do: make inferer a singleton"
-	(self inferer isNil & block isClean  ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
+	| b entryPoint|
+	self flag: 'clean all these dirty places. <todo: make inferer a singleton>'.
 	
-"	self halt."	
-	b :=  self visitBodyNode: aMethodNode body.
-	b name: 'Method ' , aMethodNode selector asString . 
-	(self inferer isNil ) ifFalse: [ methods add: (self inferer entryPoints  at: 1) -> b].
+	(self inferer isNil ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  aMethodNode ].
+	
+	
+	(self inferer entryPoints notEmpty )
+		ifTrue: [ 
+			entryPoint := self inferer entryPoints at: 1.
+			(methods includesKey:  entryPoint ) 
+				ifTrue: [ b := methods at: entryPoint]
+				ifFalse: [ 
+					b :=  self visitBodyNode: aMethodNode body at: entryPoint .
+					b name: 'Method ' , aMethodNode selector asString . 
+					methods add: entryPoint -> b.]
+				]
+			ifFalse: [  
+				b :=  self visitBodyNode: aMethodNode body .
+				b name: 'Method ' , aMethodNode selector asString . 
+			].
 	
 		^ b
 ]
@@ -455,6 +433,24 @@ GrdVisitor >> visitMethodNode: aMethodNode at: entryPoint [
 			methods add: entryPoint -> b
 		].
 	^ b 
+]
+
+{ #category : #visiting }
+GrdVisitor >> visitNoninferringMessageNode: aNode [
+
+	(aNode selector = #subclassResponsibility)
+		ifTrue: [ ^ GrdDesignChoiceNode new name: 'subclassResponsibility' ].
+
+	(self isControlFlowSelector: aNode selector)
+		ifTrue: [  ^ self perform: (self transformSelector: aNode selector) asSymbol with: aNode].
+
+	(self isBinarySelector: aNode selector)
+		ifTrue: [  ^ self visitBinary: aNode].
+
+	(self isValueSelector: aNode selector) 
+		ifTrue: [ ^ self visitBlockValueNode: aNode ].	
+	
+	^nil
 ]
 
 { #category : #visiting }
