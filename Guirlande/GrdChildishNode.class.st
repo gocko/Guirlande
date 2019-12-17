@@ -1,9 +1,6 @@
 Class {
 	#name : #GrdChildishNode,
 	#superclass : #GrdNode,
-	#instVars : [
-		'children'
-	],
 	#category : #Guirlande
 }
 
@@ -14,7 +11,9 @@ GrdChildishNode >> addChild: aNode [
 	aNode nextNode: self exitNode.
 	aNode previousNode: self exitNode previousNode.
 	self exitNode previousNode: aNode.
+	aNode parent: self startNode parent.
 	children add: aNode before: self exitNode.
+	
 	
 
 
@@ -46,8 +45,11 @@ GrdChildishNode >> initialize [
 GrdChildishNode >> initializeStartExit [
 
 	| startNode exitNode |
+	
 	startNode := GrdStartNode new.
 	exitNode := GrdExitNode new.
+	startNode parent: self.
+	exitNode parent: self.
 	startNode nextNode: exitNode.
 	exitNode previousNode: startNode.
 	children addFirst: startNode. 

@@ -2,14 +2,36 @@ Class {
 	#name : #GrdNode,
 	#superclass : #Object,
 	#instVars : [
-		'rawNode',
 		'parent',
+		'children',
 		'nextNode',
 		'previousNode',
 		'name'
 	],
 	#category : #Guirlande
 }
+
+{ #category : #accessing }
+GrdNode >> allNodes [
+| children | 
+
+children := OrderedCollection new.
+children add: self.
+(self isKindOf: GrdChildishNode)
+ifTrue: [ self children do: [  :each | children addAll: each allNodes] ].
+^ children
+]
+
+{ #category : #accessing }
+GrdNode >> children [
+	^ children
+]
+
+{ #category : #testing }
+GrdNode >> initialize [
+	super initialize.
+	children := nil
+]
 
 { #category : #testing }
 GrdNode >> isExit [

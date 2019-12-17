@@ -7,7 +7,7 @@ Class {
 { #category : #expressions }
 GrdSample >> addition [
 " - / \ * ~ < > = @ % | & ? , "
-	2+2
+	^2+2
 ]
 
 { #category : #expressions }
@@ -29,8 +29,8 @@ GrdSample >> blok2Value [
 
 { #category : #blocks }
 GrdSample >> blokAssignment [
-	|a|
-	^ a := [2].
+	|a |
+	a := [2]
 	
 ]
 
@@ -89,6 +89,15 @@ GrdSample >> justIfFalse [
 ]
 
 { #category : #selectors }
+GrdSample >> justIfFalseIfTrue [
+
+true
+	ifFalse: [ 11 ]
+	ifTrue: [ 22 ]
+	
+]
+
+{ #category : #selectors }
 GrdSample >> justIfTrue [
 	true ifTrue:[1]
 	
@@ -117,6 +126,20 @@ GrdSample >> justIfTrueFalseBlokIf [
 			do: [ :each | true ifTrue:[each] ifFalse:[23]]]
 	
 
+]
+
+{ #category : #selectors }
+GrdSample >> justIfTrueIfFalse [
+
+	true
+		ifTrue: [ 33 ]
+		ifFalse: [ 42 ]
+	
+]
+
+{ #category : #selectors }
+GrdSample >> justIfTrueInIfTrue [
+	true ifTrue:[ false ifTrue: [true]]
 ]
 
 { #category : #selectors }
@@ -149,21 +172,32 @@ GrdSample >> onlyArray [
 { #category : #accessing }
 GrdSample >> onlyAssignment [
 	|a|
-	^ a := 2.
+	a := 2.
 	
 ]
 
 { #category : #accessing }
 GrdSample >> onlyCascadeStatement [
-|date aStream|
-		date printOn: aStream format: #(3 2 1 $- 1 1 2);
-		printOn: aStream format: #(3 2 1 $- 1 1 2)
+|a|
+		
+a := 3
+a abs; gcd: 7
+
 	
 ]
 
 { #category : #accessing }
 GrdSample >> onlyConstant [
 	23
+	
+]
+
+{ #category : #selectors }
+GrdSample >> onlyIfFalseIfTrue [
+
+true
+	ifFalse: [ 11 ]
+	ifTrue: [ 22 ]
 	
 ]
 
@@ -185,6 +219,12 @@ GrdSample >> onlyReturn [
 ]
 
 { #category : #accessing }
+GrdSample >> onlyReturnMessageResult [
+
+	^ 42 abs 
+]
+
+{ #category : #accessing }
 GrdSample >> onlyStatement [
  2*3
 	
@@ -193,7 +233,7 @@ GrdSample >> onlyStatement [
 { #category : #selectors }
 GrdSample >> pureReturnIfFalseIfTrue [
 
-	^ true
+	^true
 			ifFalse: [ 11 ]
 			ifTrue: [ 22 ]
 	

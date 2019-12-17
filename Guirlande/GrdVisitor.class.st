@@ -14,11 +14,14 @@ Class {
 	#name : #GrdVisitor,
 	#superclass : #RBProgramNodeVisitor,
 	#instVars : [
-		'node'
+		'node',
+		'inferer',
+		'methods'
 	],
 	#classVars : [
 		'BinarySelectors',
-		'ControlFlowSelectors'
+		'ControlFlowSelectors',
+		'CoreSelectors'
 	],
 	#category : #Guirlande
 }
@@ -29,6 +32,7 @@ GrdVisitor class >> initialize [
 
 	self initializeControlFlowSelectors.
 	self initializeBinarySelectors.
+	self initializeCoreSelectors 
 ]
 
 { #category : #initialization }
@@ -39,9 +43,9 @@ GrdVisitor class >> initializeBinarySelectors [
 { #category : #initialization }
 GrdVisitor class >> initializeControlFlowSelectors [
 	"ControlFlowSelectors are the selectors that are taken into account during control flow analysis.
-	They are transformed and use to call associated visitMethod, ie visitIfTrueIfFalse: for ifTrue:ifFalse:"
+	They are transformed and use to call associated visitMethod, ie visitIfTrue: for ifTrue:"
 
-	ControlFlowSelectors := #(#ifTrue:ifFalse: #ifFalse:ifTrue: #ifFalse: #ifTrue: #do:)
+	ControlFlowSelectors := #(#ifFalse: #ifTrue: #whileTrue: #whileFalse:)
 ]
 
 { #category : #accessing }
@@ -49,10 +53,21 @@ GrdVisitor >> exitNode [
 	^ node exitNode
 ]
 
+{ #category : #accessing }
+GrdVisitor >> inferer [
+	^inferer
+]
+
+{ #category : #accessing }
+GrdVisitor >> inferer: anInferer [
+	inferer := anInferer
+]
+
 { #category : #initialization }
 GrdVisitor >> initialize [
 	super initialize.
-	node := GrdBodyNode new.
+	node := GrdChildishNode new.
+	methods := Dictionary new
 
 ]
 
@@ -60,7 +75,9 @@ GrdVisitor >> initialize [
 GrdVisitor >> isBinarySelector: aSymbol [
 	"returns whether the selector should be considered as a binaryselector and handled as such"
 
-	^ (BinarySelectors includes: aSymbol)	
+	(aSymbol asString) do: [ :each | (BinarySelectors includes: each asSymbol ) ifFalse: [^ false]].
+	^true
+		
 ]
 
 { #category : #testing }
@@ -74,8 +91,7 @@ GrdVisitor >> isControlFlowSelector: aSymbol [
 GrdVisitor >> isValueSelector: aSymbol [
 	"returns whether the selector should be considered as a control flow selector and handled as such"
 
-
-	^ ((aSymbol separateKeywords) includesSubstring: 'value:')	
+	^ ((aSymbol separateKeywords) includesSubstring: 'value')	
 ]
 
 { #category : #accessing }
@@ -147,19 +163,14 @@ GrdVisitor >> visitBinary: aNode [
 ]
 
 { #category : #visiting }
-GrdVisitor >> visitBlockNode: aNode [
+GrdVisitor >> visitBlockNode: aNode [ 
 
-	| block body |
+	| block blockEntryPoint |
 	
+	"blockEntryPoint := ((inferer typeProvider messageTypes) detect: [:messageType | messageType message = aNode body statements first]) methodType."
 	block := GrdBlockNode new.
-	body:= (GrdVisitor new) visitBodyNode: aNode body.
-	"block insertNode: body."
-	block addChild: body.
-	body parent: block.
+	block addChild: ( self visitBodyNode: aNode ).
 	block name: 'block'.
-	
-	"value := self visitNode: aNode arguments first."
-	
 	^ block
 	
 	
@@ -179,48 +190,39 @@ GrdVisitor >> visitBlockValueNode: aValueNode [
 ]
 
 { #category : #visiting }
-GrdVisitor >> visitBodyNode: aNode [
+GrdVisitor >> visitBodyNode: aNode [ 
 	
-	| b |
+	| b statements |
+	
 	b := GrdBodyNode new.
-	b insertChildren: (aNode statements collect: [:each | (self visitNode: each) ]).
+	statements := aNode statements.
+	( statements do: [:each | (each class = RBMessageNode) 		
+				ifTrue:[ b addChild: (self visitMessageNode: each)]
+				ifFalse: [ b addChild: (self visitNode: each)]] ) .
 	b name: 'body'.
-	^ b
+	^ b 
+]
+
+{ #category : #visiting }
+GrdVisitor >> visitBodyNode: aNode at: entryPoints [
+	
+	| b statements |
+	
+	b := GrdBodyNode new.
+	statements := aNode statements.
+	( statements do: [:each |  (each class = RBMessageNode) 		
+				ifTrue:[ b addChild: (self visitMessageNode: each at: entryPoints)]
+				ifFalse: [ b addChild: (self visitNode: each)]] ) .
+	b name: 'body'.
+	^ b 
 ]
 
 { #category : #visiting }
 GrdVisitor >> visitCascadeNode: aCascadeNode [ 
 	|childishNode|
 	childishNode := GrdChildishNode new.
-	aCascadeNode messages do: [:each | childishNode addChild: (self visitNode: each)].
+	aCascadeNode messages do: [:each | childishNode addChild: (self visitMessageNode: each)].
 	^childishNode
-]
-
-{ #category : #'visiting control selectors' }
-GrdVisitor >> visitDo: aNode [
-	| loopNode collectionReceiver blockArg bodyOfBlock exitOfBody |
-	loopNode := GrdDoNode new.
-	collectionReceiver := self visitNode: aNode receiver.
-	blockArg := self visitBlockNode: (aNode arguments) first.
-	bodyOfBlock := (blockArg children at:2).
-   exitOfBody := (bodyOfBlock children at:2) nextNode .
-	loopNode name: 'do node'.
-
-	loopNode addChild: collectionReceiver.
-	loopNode addChild: blockArg.
-	
-	collectionReceiver nextNode: blockArg.
-	blockArg previousNode: collectionReceiver.
-	blockArg nextNode: collectionReceiver. " povratna sprega "
-	
-	
-	
-	collectionReceiver parent: loopNode.
-	blockArg parent: loopNode.
-	
-	^ loopNode
-		condition: collectionReceiver;
-		doBranch: blockArg
 ]
 
 { #category : #'visiting control selectors' }
@@ -229,9 +231,9 @@ GrdVisitor >> visitIfFalse: aNode [
 	self flag: #somewrong. "is iffalse a if branch or would not be better to have it as a elseBranch. 
 	do we make the distinction."
 	
-	conditionNode := GrdIfSingleBranchNode new.
+	conditionNode := GrdSingleBranchNode new.
 	cond := self visitNode: aNode receiver.
-	if := self visitNode: aNode arguments first.
+	if := self visitBlockNode: aNode arguments first.
 	conditionNode name: 'ifFalse node'.
 	
 	cond nextNode: if.
@@ -252,6 +254,9 @@ GrdVisitor >> visitIfFalse: aNode [
 GrdVisitor >> visitIfFalseIfTrue: aNode [
 
 	| conditionNode cond if else |
+
+self flag: 'we are not going to need this'.
+
 	conditionNode := GrdIfDoubleBranchNode new.
 	cond := self visitNode: aNode receiver.
 	if := self visitNode: aNode arguments second.
@@ -281,9 +286,9 @@ GrdVisitor >> visitIfFalseIfTrue: aNode [
 { #category : #'visiting control selectors' }
 GrdVisitor >> visitIfTrue: aNode [
 	| conditionNode cond if |
-	conditionNode := GrdIfSingleBranchNode new.
+	conditionNode := GrdSingleBranchNode new.
 	cond := self visitNode: aNode receiver.
-	if := self visitNode: aNode arguments first.
+	if := self visitBlockNode: aNode arguments first.
 	conditionNode name: 'ifTrue node'.
 
 	cond nextNode: if.
@@ -303,6 +308,9 @@ GrdVisitor >> visitIfTrue: aNode [
 { #category : #'visiting control selectors' }
 GrdVisitor >> visitIfTrueIfFalse: aNode [
 	| conditionNode cond if else |
+	
+self flag: 'we are not going to need this'.
+
 	conditionNode := GrdIfDoubleBranchNode new.
 	cond := self visitNode: aNode receiver.
 	if := self visitNode: aNode arguments first.
@@ -347,7 +355,10 @@ GrdVisitor >> visitLiteralNode: aNode [
 
 { #category : #visiting }
 GrdVisitor >> visitMessageNode: aNode [
-	| childishNode|
+	| block entryPoint |
+
+	(aNode selector = #subclassResponsibility)
+		ifTrue: [ ^ GrdDesignChoiceNode new name: 'subclassResponsibility' ].
 
 	(self isControlFlowSelector: aNode selector)
 		ifTrue: [  ^ self perform: (self transformSelector: aNode selector) asSymbol with: aNode].
@@ -356,12 +367,54 @@ GrdVisitor >> visitMessageNode: aNode [
 		ifTrue: [  ^ self visitBinary: aNode].
 
 	(self isValueSelector: aNode selector) 
-		ifTrue: [ ^ self visitBlockValueNode: aNode ].
+		ifTrue: [ ^ self visitBlockValueNode: aNode ].	
+
 	
-			
-	childishNode := GrdChildishNode new.	
+
+	self flag: 'clean all these dirty places'.
+	self inferer isNil ifTrue:[
+		block := BlockClosure readFrom: '[',aNode sourceCode,']'.
+			"to do: make inferer a singleton"
+		(block isClean  ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ]].
+	
+	entryPoint := ((inferer typeProvider messageTypes) detect: [:messageType | messageType message = aNode]) methodType .
+	^self visitMessageNode: aNode at: entryPoint 
+]
+
+{ #category : #visiting }
+GrdVisitor >> visitMessageNode: aNode at: entryPoint [
+	| block methodsInvoked childishNode messageType |
+	
+
+
+	(self isControlFlowSelector: aNode selector)
+		ifTrue: [  ^ self perform: (self transformSelector: aNode selector) asSymbol with: aNode].
+
+	(self isBinarySelector: aNode selector)
+		ifTrue: [  ^ self visitBinary: aNode].
+
+	(self isValueSelector: aNode selector) 
+		ifTrue: [ ^ self visitBlockValueNode: aNode ].	
+
+	(aNode selector = #subclassResponsibility)
+		ifTrue: [ ^ GrdDesignChoiceNode new name: 'subclassResponsibility' ].
+
+
+	self flag: 'clean all these dirty places'.
+	block := BlockClosure readFrom: '[',aNode sourceCode,']'.
+			"to do: make inferer a singleton"
+	(self inferer isNil & block isClean  ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
+
+	messageType := entryPoint getMessageType: aNode.
+	methodsInvoked  := messageType methodTypes array.
+
+	childishNode := GrdChildishNode new.
+	
 	(aNode isCascaded not or: [aNode isFirstCascaded]) 
 		ifTrue: [ childishNode addChild: (self visitNode: aNode receiver)].
+	 
+	methodsInvoked do: [:each | each notNil ifTrue: [childishNode addChild: (self visitMethodNode: each node at: each) ]].			
+	 
 	aNode arguments do: [:each | childishNode addChild: (self visitNode: each)].
 	^ childishNode
 
@@ -371,43 +424,36 @@ GrdVisitor >> visitMessageNode: aNode [
 { #category : #visiting }
 GrdVisitor >> visitMethodNode: aMethodNode [ 
 	
-	|inferer entries b methods messages statements childishNode|
-	inferer := PhineasInferer new.
-	messages := OrderedCollection new.
-	methods := OrderedCollection new.
-	inferer infer:  (BlockClosure readFrom: '[',aMethodNode body sourceCode,']') .
-	entries := inferer entryPoints.
-	( entries collect: [:aMethodType| aMethodType messagesTypes]) do: [:each | messages addAll: each].
-	( messages collect:[:aMessageType| aMessageType methodTypes ]) do: [:each | methods addAll: each].
+	| b block |
+	self flag: 'clean all these dirty places'.
+	block := BlockClosure readFrom: '[',aMethodNode body sourceCode,']'.
+			"to do: make inferer a singleton"
+	(self inferer isNil & block isClean  ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
 	
-	statements := aMethodNode body statements.
-		
-	b := GrdBodyNode new.
-	(statements do: [:each |  (each class = RBMessageNode) 		
-				ifTrue:[childishNode := GrdChildishNode new. (messages select: [ :any | any message = each ]) do: [:all | all methodTypes do: [ :method| childishNode addChild: (self visitMethodNode: method node with: inferer from: method). b addChild: childishNode]]]
-				ifFalse: [b addChild: (self visitNode: each)]]).
-	b name: 'method name'.
-	^ b 
+"	self halt."	
+	b :=  self visitBodyNode: aMethodNode body.
+	b name: 'Method ' , aMethodNode selector asString . 
+	(self inferer isNil ) ifFalse: [ methods add: (self inferer entryPoints  at: 1) -> b].
+	
+		^ b
 ]
 
 { #category : #visiting }
-GrdVisitor >> visitMethodNode: aMethodNode with: anInferer from: entryPoints [
+GrdVisitor >> visitMethodNode: aMethodNode at: entryPoint [
 	
-	| entries b methods messages statements childishNode|
-	messages := OrderedCollection new.
-	methods := OrderedCollection new.
-	entries := entryPoints. "have to move entry points"
-	entries messagesTypes do: [:each | messages add: each].
-	( messages collect:[:aMessageType| aMessageType methodTypes ]) do: [:each | methods addAll: each].
-	
-	statements := aMethodNode body statements.
-		
-	b := GrdBodyNode new.
-	
-	( statements do: [:each |  (each class = RBMessageNode) 		
-				ifTrue:[childishNode := GrdChildishNode new. (messages select: [ :any | any message = each ]) do: [:all | all methodTypes do: [ :method| childishNode addChild: (self visitMethodNode: method node with: anInferer from: method)]]. b addChild: childishNode]
-				ifFalse: [b addChild: (self visitNode: each)]] ) .
-	b name: 'method name'.
+	| b block |
+		self flag: 'clean all these dirty places'.
+	block := BlockClosure readFrom: '[',aMethodNode body sourceCode,']'.
+	"to do: make inferer a singleton"
+	(self inferer isNil ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
+	"self halt."
+	(methods includesKey:  entryPoint) 
+		ifTrue: [ b := methods at: entryPoint]
+		ifFalse: [ 	
+			b := self visitBodyNode: aMethodNode body at: entryPoint.
+			b name: 'Method ' , aMethodNode selector asString . 
+			methods add: entryPoint -> b
+		].
 	^ b 
 ]
 
@@ -426,4 +472,58 @@ GrdVisitor >> visitVariableNode: aNode [
 	v := GrdVariableNode new value: aNode value.
 	v name: 'variable'.
 	^ v
+]
+
+{ #category : #'visiting control selectors' }
+GrdVisitor >> visitWhileFalse: aNode [
+	| loopNode collectionReceiver blockArg bodyOfBlock exitOfBody |
+	
+self flag: 'we are not going to need this. Replace by whileTrue'.
+
+	loopNode := GrdLoopNode new.
+	collectionReceiver := self visitNode: aNode receiver.
+	blockArg := self visitBlockNode: (aNode arguments) first.
+	bodyOfBlock := (blockArg children at:2).
+   exitOfBody := (bodyOfBlock children at:2) nextNode .
+	loopNode name: 'whileTrue node'.
+
+	loopNode addChild: collectionReceiver.
+	loopNode addChild: blockArg.
+	
+	collectionReceiver nextNode: blockArg.
+	blockArg previousNode: collectionReceiver.
+	blockArg nextNode: collectionReceiver. " povratna sprega "
+	
+	collectionReceiver parent: loopNode.
+	blockArg parent: loopNode.
+	
+	^ loopNode
+		
+]
+
+{ #category : #'visiting control selectors' }
+GrdVisitor >> visitWhileTrue: aNode [
+	| loopNode collectionReceiver blockArg bodyOfBlock exitOfBody |
+	
+self flag: 'we are not going to need this. Replace by whileTrue'.
+
+	loopNode := GrdLoopNode new.
+	collectionReceiver := self visitNode: aNode receiver.
+	blockArg := self visitBlockNode: (aNode arguments) first.
+	bodyOfBlock := (blockArg children at:2).
+   exitOfBody := (bodyOfBlock children at:2) nextNode .
+	loopNode name: 'whileTrue node'.
+
+	loopNode addChild: collectionReceiver.
+	loopNode addChild: blockArg.
+	
+	collectionReceiver nextNode: blockArg.
+	blockArg previousNode: collectionReceiver.
+	blockArg nextNode: collectionReceiver. " povratna sprega "
+	
+	collectionReceiver parent: loopNode.
+	blockArg parent: loopNode.
+	
+	^ loopNode
+		
 ]
