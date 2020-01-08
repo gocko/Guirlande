@@ -88,9 +88,8 @@ GrdVisualizer >> visualizeCFG [
 	| ast astv visitor c shapes eb lbl lps nodes|
 	c := RSCanvas new.
 	
-	ast := RBParser parseMethod: (GrdSample>>##justIfTrueIfFalse) getSourceFromFile .
 	visitor := GrdVisitor  new.
-	astv := (ast acceptVisitor: visitor).
+	astv := ( visitor visitMethodNode: (GrdSample>>#onlyReturnMessageResult) ast).
 	
 	nodes := astv allNodes.
 	

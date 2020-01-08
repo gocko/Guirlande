@@ -409,10 +409,7 @@ GrdVisitor >> visitMethodNode: aMethodNode at: entryPoint [
 	
 	| b block |
 		self flag: 'clean all these dirty places'.
-	block := BlockClosure readFrom: '[',aMethodNode body sourceCode,']'.
-	"to do: make inferer a singleton"
-	(self inferer isNil ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  block ].
-	"self halt."
+	(self inferer isNil ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  aMethodNode ].
 	(methods includesKey:  entryPoint) 
 		ifTrue: [ b := methods at: entryPoint]
 		ifFalse: [ 	
