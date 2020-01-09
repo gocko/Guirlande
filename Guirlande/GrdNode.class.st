@@ -30,6 +30,7 @@ GrdNode >> children [
 { #category : #testing }
 GrdNode >> initialize [
 	super initialize.
+	name := ''.
 	children := nil
 ]
 

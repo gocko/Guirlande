@@ -305,6 +305,53 @@ GuirlandeTest >> testExpressionSubtraction [
 	self assert: msgArg parent class equals: GrdExpressionNode. 
 ]
 
+{ #category : #tests }
+GuirlandeTest >> testFact [
+	|   ifLessNode  ifLessCondition  ifLessMethod ifLessBlock factNode varNode parameterNode ifMoreNode ifMoreCondition ifMoreMethod ifMoreBlock errorNode |
+	
+	self flag: 'does not test the recursion'.
+	
+	self visitSampleMethodNamed: #fact.
+	varNode := visitor node startNode nextNode startNode nextNode startNode nextNode .
+	factNode := varNode nextNode.
+	parameterNode := factNode nextNode.
+	
+	ifLessNode := factNode startNode nextNode .
+	ifLessCondition := ifLessNode startNode nextNode.
+	ifLessMethod := ifLessCondition nextNode.
+	ifLessBlock := ifLessMethod nextNode.
+	
+	ifMoreNode := ifLessNode nextNode .
+	ifMoreCondition := ifMoreNode startNode nextNode.
+	ifMoreMethod := ifMoreCondition nextNode.
+	ifMoreBlock := ifMoreMethod nextNode.
+	
+	errorNode := ifMoreNode nextNode.
+
+	self assert: parameterNode nextNode isExit.
+	self assert: varNode class equals: GrdVariableNode .
+	self assert: factNode class equals: GrdBodyNode .
+	self assert: parameterNode class equals: GrdConstantNode .
+	
+	self assert: errorNode nextNode isExit.
+	
+	self assert: ifLessNode class equals: GrdSingleBranchNode .
+	self assert: ifLessCondition class equals: GrdExpressionNode. 
+	self assert: ifLessBlock class equals: GrdBlockNode. 
+	self assert: ifLessNode children size equals: 5.
+	self assert: ifLessMethod class equals: GrdCoreMethodNode .
+	
+	self assert: ifMoreNode class equals: GrdSingleBranchNode.
+	self assert: ifMoreCondition class equals: GrdExpressionNode. 
+	self assert: ifMoreBlock class equals: GrdBlockNode. 
+	self assert: ifMoreNode children size equals: 5.
+	self assert: ifMoreMethod class equals: GrdCoreMethodNode.
+	
+	self assert: errorNode class equals: GrdChildishNode .	
+	
+	
+]
+
 { #category : #'tests-bodynode' }
 GuirlandeTest >> testInsertNodes [
 	| b col |

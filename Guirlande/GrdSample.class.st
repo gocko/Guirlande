@@ -74,6 +74,18 @@ GrdSample >> exampleNew [
 	
 ]
 
+{ #category : #expressions }
+GrdSample >> fact [
+	^self fact: 5
+]
+
+{ #category : #expressions }
+GrdSample >> fact: n [
+	n = 0 ifTrue: [^ 1].
+	n > 0 ifTrue: [^ n * (self fact: (n - 1))].
+	self error: 'Not valid for negative integers'
+]
+
 { #category : #blocks }
 GrdSample >> justBlokIf [
 

@@ -392,9 +392,11 @@ GrdVisitor >> visitMethodNode: aMethodNode [
 			(methods includesKey:  entryPoint ) 
 				ifTrue: [ b := methods at: entryPoint]
 				ifFalse: [ 
+					methods add: entryPoint -> nil.
 					b :=  self visitBodyNode: aMethodNode body at: entryPoint .
 					b name: 'Method ' , aMethodNode selector asString . 
-					methods add: entryPoint -> b.]
+					methods at: entryPoint put: b.
+					]
 				]
 			ifFalse: [  
 				b :=  self visitBodyNode: aMethodNode body .
@@ -411,11 +413,12 @@ GrdVisitor >> visitMethodNode: aMethodNode at: entryPoint [
 		self flag: 'clean all these dirty places'.
 	(self inferer isNil ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  aMethodNode ].
 	(methods includesKey:  entryPoint) 
-		ifTrue: [ b := methods at: entryPoint]
+		ifTrue: [  b := methods at: entryPoint]
 		ifFalse: [ 	
+			methods add: entryPoint -> nil.
 			b := self visitBodyNode: aMethodNode body at: entryPoint.
 			b name: 'Method ' , aMethodNode selector asString . 
-			methods add: entryPoint -> b
+			methods at: entryPoint put: b.
 		].
 	^ b 
 ]

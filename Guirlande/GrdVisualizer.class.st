@@ -85,17 +85,17 @@ GrdVisualizer >> visualizeAST [
 
 { #category : #'main methods' }
 GrdVisualizer >> visualizeCFG [
-	| ast astv visitor c shapes eb lbl lps nodes|
+	| astv visitor c shapes eb lbl lps nodes|
 	c := RSCanvas new.
 	
 	visitor := GrdVisitor  new.
-	astv := ( visitor visitMethodNode: (GrdSample>>#onlyReturnMessageResult) ast).
+	astv := ( visitor visitMethodNode: (GrdSample>>#fact) ast).
 	
 	nodes := astv allNodes.
 	
 	shapes :=  nodes collect: [ :cls |
-		lbl := RSLabel new
-			text: cls ;
+			lbl := RSLabel new
+			text: cls name;
 			yourself.
 		lps := RSEllipse new
 			withBorder.
@@ -115,12 +115,11 @@ GrdVisualizer >> visualizeCFG [
 	eb connectFrom: #parent .
 	eb connectTo: #nextNode.
 
-
+	RSHorizontalTreeLayout  new 
+		
+		on: c nodes.
+	c @ RSCanvasController.
+	^ c	
 	
-	RSTreeLayout  on: shapes.
-	shapes do: [ :e | e translateBy: 0 @ 0 ].
-	c @ RSDraggableCanvas.
-	c zoomToFit .
-	c camera scale: 1.	
-	^ c
+
 ]
