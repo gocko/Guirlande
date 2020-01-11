@@ -12,7 +12,7 @@ GrdVisualizer >> hasChildBody:n show:view flag:flag visitor: visitor [
 			 (c isKindOf: GrdIfDoubleBranchNode) ifTrue:[                               "GrdIfDoubleBranch is different because of: edges connectFrom: #previousNode"
 					self showColors:flag node: c view:view visitor:visitor.				
 					view shape arrowedLine.	
-					view edges connectFrom: #previousNode.
+					view edges connectFromAll: #previousNodes.
 					view layout tree 
 				] 
 			 ifFalse: [ 

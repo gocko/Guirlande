@@ -126,7 +126,7 @@ GrdVisitor >> visitAssignmentNode: aNode [
 	a addChild: value.
 	
 	variable nextNode: value.
-	value previousNode: variable.
+	value previousNodes add: variable.
 
 	a name: 'array'.
 	^ a
@@ -145,9 +145,9 @@ GrdVisitor >> visitBinary: aNode [
 	binaryNode name: 'binary node'.
 
 	msgReceiver nextNode: msgSelector.
-	msgSelector previousNode: msgReceiver.
+	msgSelector previousNodes add: msgReceiver.
 	msgSelector nextNode: msgArg.
-	msgArg previousNode: msgSelector.
+	msgArg previousNodes add: msgSelector.
 	
 	binaryNode addChild: msgReceiver.
 	binaryNode addChild: msgSelector.
@@ -259,9 +259,9 @@ self flag: 'we are not going to need this'.
 	conditionNode addChild: if.		
 			
 	cond nextNode: else.
-	else previousNode: cond.			
+	else previousNodes add: cond.			
 	cond nextNode: if.
-	if previousNode: cond.
+	if previousNodes add: cond.
 	
 	cond parent: conditionNode.
 	else parent: conditionNode.
@@ -308,9 +308,9 @@ self flag: 'we are not going to need this'.
 	conditionNode addChild: else.
 	
 	cond nextNode: if.
-	if previousNode: cond.
+	if previousNodes add:  cond.
 	cond nextNode: else.
-	else previousNode: cond.
+	else previousNodes add: cond.
 
 	
 	cond parent: conditionNode.
@@ -392,10 +392,10 @@ GrdVisitor >> visitMethodNode: aMethodNode [
 			(methods includesKey:  entryPoint ) 
 				ifTrue: [ b := methods at: entryPoint]
 				ifFalse: [ 
-					methods add: entryPoint -> nil.
+					methods add: entryPoint -> GrdNode new.
 					b :=  self visitBodyNode: aMethodNode body at: entryPoint .
 					b name: 'Method ' , aMethodNode selector asString . 
-					methods at: entryPoint put: b.
+					methods at: entryPoint put: ((methods at: entryPoint ) mergeToNode: b).
 					]
 				]
 			ifFalse: [  
@@ -415,10 +415,10 @@ GrdVisitor >> visitMethodNode: aMethodNode at: entryPoint [
 	(methods includesKey:  entryPoint) 
 		ifTrue: [  b := methods at: entryPoint]
 		ifFalse: [ 	
-			methods add: entryPoint -> nil.
+			methods add: entryPoint -> GrdNode new.
 			b := self visitBodyNode: aMethodNode body at: entryPoint.
 			b name: 'Method ' , aMethodNode selector asString . 
-			methods at: entryPoint put: b.
+			methods at: entryPoint put: ((methods at: entryPoint ) mergeToNode: b).
 		].
 	^ b 
 ]

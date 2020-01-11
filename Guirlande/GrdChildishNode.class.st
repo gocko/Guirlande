@@ -6,11 +6,12 @@ Class {
 
 { #category : #accessing }
 GrdChildishNode >> addChild: aNode [
+self flag: 'maybe can have two previous nodes'.
 
-	self exitNode previousNode nextNode: aNode.
+	self exitNode previousNodes do: [ :each | each nextNode: aNode].
 	aNode nextNode: self exitNode.
-	aNode previousNode: self exitNode previousNode.
-	self exitNode previousNode: aNode.
+	aNode previousNodes removeAll addAll: self exitNode previousNodes.
+	self exitNode previousNodes removeAll add: aNode.
 	aNode parent: self startNode parent.
 	children add: aNode before: self exitNode.
 	
@@ -51,7 +52,7 @@ GrdChildishNode >> initializeStartExit [
 	startNode parent: self.
 	exitNode parent: self.
 	startNode nextNode: exitNode.
-	exitNode previousNode: startNode.
+	exitNode previousNodes add: startNode.
 	children addFirst: startNode. 
 	children addLast: exitNode.
 	
@@ -59,7 +60,7 @@ GrdChildishNode >> initializeStartExit [
 
 { #category : #'as yet unclassified' }
 GrdChildishNode >> insertChildren: listOfNodes [
-	listOfNodes do: [:each | self addChild: each ].
+	listOfNodes do:  [:each | self addChild: each ].
 	
 	
 ]

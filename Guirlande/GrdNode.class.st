@@ -5,8 +5,8 @@ Class {
 		'parent',
 		'children',
 		'nextNode',
-		'previousNode',
-		'name'
+		'name',
+		'previousNodes'
 	],
 	#category : #Guirlande
 }
@@ -31,7 +31,10 @@ GrdNode >> children [
 GrdNode >> initialize [
 	super initialize.
 	name := ''.
-	children := nil
+	children := nil.
+	previousNodes := OrderedCollection new.
+	
+
 ]
 
 { #category : #testing }
@@ -44,6 +47,15 @@ GrdNode >> isExit [
 GrdNode >> isReturn [
 
 	^ false
+]
+
+{ #category : #accessing }
+GrdNode >> mergeToNode: aNode [
+	
+	self children isNil ifFalse: [ aNode children isNil ifTrue: [aNode children: self children] ifFalse: [  aNode children addAll: self children]].
+	aNode nextNode isNil ifTrue: [ aNode nextNode: self nextNode ].
+	^aNode
+
 ]
 
 { #category : #accessing }
@@ -80,22 +92,11 @@ GrdNode >> parent: aParentNode [
 ]
 
 { #category : #accessing }
-GrdNode >> previousNode [
-	^ previousNode
+GrdNode >> previousNodes [
+	^previousNodes
 ]
 
 { #category : #accessing }
-GrdNode >> previousNode: aNode [
-	previousNode := aNode
-]
-
-{ #category : #accessing }
-GrdNode >> rawNode [
-	^ rawNode
-]
-
-{ #category : #accessing }
-GrdNode >> rawNode: aProgramNode [
-
-	rawNode := aProgramNode
+GrdNode >> previousNodes: aCollectionOfNodes [
+	previousNodes := aCollectionOfNodes
 ]

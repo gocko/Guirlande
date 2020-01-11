@@ -8,6 +8,14 @@ Class {
 }
 
 { #category : #initialization }
+GuirlandeTest >> collection: aCollection contains: anElement [
+	| cont |
+	cont := false .
+	aCollection do: [ :each | cont := cont | (each = anElement)].
+	^cont
+]
+
+{ #category : #initialization }
 GuirlandeTest >> setUp [
 	super setUp.
 	visitor := GrdVisitor new.
@@ -353,15 +361,17 @@ GuirlandeTest >> testFact [
 ]
 
 { #category : #'tests-bodynode' }
-GuirlandeTest >> testInsertNodes [
-	| b col |
+GuirlandeTest >> testInsertChildren [
+	| b col cont|
 	b := GrdBodyNode new.
 	col := { GrdConstantNode new value: 1 . GrdConstantNode new value: 2 }.
 	b insertChildren: col.
 	self assert: b startNode nextNode equals: col first.
+	self assert: b startNode nextNode nextNode equals: col second.
 	self assert: col second nextNode equals: b exitNode.
-	self assert: b startNode nextNode previousNode equals: b startNode.
-	self assert: col second previousNode equals: col first.  
+	
+	self assert: (self collection: b startNode nextNode previousNodes contains:b startNode) equals: true.
+	self assert: (self collection: b startNode nextNode nextNode previousNodes contains:col first) equals: true.
 ]
 
 { #category : #'tests-blocks' }
@@ -704,7 +714,7 @@ GuirlandeTest >> testPureReturnIfTrueIfFalseSimpleCheck [
 	self visitSampleMethodNamed: #pureReturnIfTrueIfFalse.
 	self assert: visitor startNode nextNode isReturn.
 	self assert: visitor startNode nextNode nextNode isExit.
-	self assert: visitor exitNode previousNode equals: visitor startNode nextNode 
+	self assert: (self collection: visitor exitNode previousNodes contains: visitor startNode nextNode) equals: true.
 ]
 
 { #category : #tests }
