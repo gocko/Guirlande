@@ -32,7 +32,7 @@ GrdVisitor class >> initialize [
 
 	self initializeControlFlowSelectors.
 	self initializeBinarySelectors.
-	self initializeCoreSelectors 
+	
 ]
 
 { #category : #initialization }
@@ -45,7 +45,7 @@ GrdVisitor class >> initializeControlFlowSelectors [
 	"ControlFlowSelectors are the selectors that are taken into account during control flow analysis.
 	They are transformed and use to call associated visitMethod, ie visitIfTrue: for ifTrue:"
 
-	ControlFlowSelectors := #(#ifFalse: #ifTrue: #whileTrue: #whileFalse:)
+	ControlFlowSelectors := #(#ifFalse: #ifTrue: #ifTrue:ifFalse: #ifFalse:ifTrue: #whileTrue: #whileFalse:)
 ]
 
 { #category : #accessing }
@@ -211,8 +211,12 @@ GrdVisitor >> visitBodyNode: aNode at: entryPoints [
 	b := GrdBodyNode new.
 	statements := aNode statements.
 	( statements do: [:each |  (each class = RBMessageNode) 		
-				ifTrue:[ temp := self visitNoninferringMessageNode: each. temp isNil ifFalse: [b addChild: temp] ifTrue: [b addChild: (self visitMessageNode: each at: entryPoints)]]
-				ifFalse: [ b addChild: (self visitNode: each)]] ) .
+				ifTrue:[ 
+					temp := self visitNoninferringMessageNode: each.
+					temp isNil 
+						ifFalse: [ b addChild: temp]
+						ifTrue: [ self halt. b addChild: (self visitMessageNode: each at: entryPoints)]]
+				ifFalse: [  b addChild: (self visitNode: each)]] ) .
 	b name: 'body'.
 	^ b 
 ]
@@ -350,7 +354,7 @@ GrdVisitor >> visitMessageNode: aNode [
 	self inferer isNil ifTrue:[ self inferer: PhineasInferer new. self inferer infer:  aNode ].
 	
 	[entryPoint := ((inferer typeProvider messageTypes) detect: [:messageType | messageType message = aNode]) methodType ]
-		on: Error do: [^ GrdUndefinedMessageNode new name: aNode selector asString].
+		on: Error do: [^ GrdUndefinedMessageNode new name: aNode selector asString , ' in frist step'].
 	
 	^ self visitMessageNode: aNode at: entryPoint 
 ]
@@ -365,10 +369,10 @@ GrdVisitor >> visitMessageNode: aNode at: entryPoint [
 	(aNode isCascaded not or: [aNode isFirstCascaded]) 
 		ifTrue: [ childishNode addChild: (self visitNode: aNode receiver)].
 
-	[messageType := self inferer messageTypeFromNode: aNode .
-	methodsInvoked  := messageType methodTypes array. 
-	methodsInvoked do: [:each | each notNil ifTrue: [childishNode addChild: (self visitMethodNode: each node at: each) ]]			
-	] on: Error do: [childishNode addChild: (GrdUndefinedMessageNode new name: aNode selector asString)].
+	[messageType := entryPoint getMessageType: aNode.
+	methodsInvoked  := messageType methodTypes. 
+	methodsInvoked do: [:each | each notNil ifTrue: [childishNode addChild:  ( self visitMethodNode: each node at: each )] ]]	
+	 on: Error do: [:ex | childishNode addChild: (GrdUndefinedMessageNode new name: aNode selector asString)].
 	
 	 
 	aNode arguments do: [:each | childishNode addChild: (self visitNode: each)].

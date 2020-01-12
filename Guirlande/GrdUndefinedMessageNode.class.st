@@ -1,5 +1,5 @@
 Class {
 	#name : #GrdUndefinedMessageNode,
-	#superclass : #GrdNode,
+	#superclass : #GrdChildishNode,
 	#category : #Guirlande
 }

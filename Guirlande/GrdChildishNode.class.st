@@ -65,6 +65,17 @@ GrdChildishNode >> insertChildren: listOfNodes [
 	
 ]
 
+{ #category : #accessing }
+GrdChildishNode >> mergeToNode: aNode [
+	
+	children isNil ifFalse: [ aNode children isNil ifTrue: [aNode children: self children] ifFalse: [  aNode children addAll: self children]].
+	aNode parent: self parent.
+	parent children at: (parent children find: self) put: aNode.
+	aNode nextNode isNil ifTrue: [ aNode nextNode: self nextNode ].
+	aNode previousNodes addAll: self previousNodes.
+	^aNode
+]
+
 { #category : #'as yet unclassified' }
 GrdChildishNode >> startNode [
 

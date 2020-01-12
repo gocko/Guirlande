@@ -1,5 +1,5 @@
 Class {
 	#name : #GrdCoreMethodNode,
-	#superclass : #GrdNode,
+	#superclass : #GrdChildishNode,
 	#category : #Guirlande
 }

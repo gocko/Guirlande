@@ -1,9 +1,6 @@
 Class {
 	#name : #GrdSingleBranchNode,
 	#superclass : #GrdConditionNode,
-	#instVars : [
-		'ifBranch'
-	],
 	#category : #Guirlande
 }
 

@@ -425,25 +425,24 @@ GuirlandeTest >> testJustIfFalse [
 
 { #category : #tests }
 GuirlandeTest >> testJustIfFalseIfTrue [
-	| singleBranchNode condition ifMethod trueBlock falseBlock|
+	| doubleBranchNode condition ifMethod trueBlock falseBlock|
 	self visitSampleMethodNamed: #justIfFalseIfTrue.
 	
-	singleBranchNode := visitor node startNode nextNode.
-	condition := singleBranchNode startNode nextNode.
+	doubleBranchNode := visitor node startNode nextNode.
+	condition := doubleBranchNode startNode nextNode.
 	ifMethod := condition nextNode.
 	falseBlock := ifMethod nextNode.
 	trueBlock := falseBlock nextNode.
 	
 	
-	self assert: singleBranchNode class equals:  GrdChildishNode.
-	self assert: singleBranchNode nextNode isExit.
+	self assert: doubleBranchNode class equals:  GrdDoubleBranchNode .
+	self assert: doubleBranchNode nextNode isExit.
 	self assert: condition class equals: GrdConstantNode.
-	self assert: ifMethod class equals: GrdBodyNode.
+	self assert: ifMethod class equals: GrdCoreMethodNode.
 	self assert: trueBlock class equals: GrdBlockNode.
 	self assert: falseBlock class equals: GrdBlockNode.	
-	self assert: singleBranchNode children size equals: 6.
-	self assert: ifMethod children size equals: 3.
-	self assert: (ifMethod children at:2 ) class equals: GrdDesignChoiceNode .
+	self assert: doubleBranchNode children  size equals: 6.
+	self assert: ifMethod children size equals: 2.
 	self assert: trueBlock startNode nextNode class equals: GrdBodyNode.
 	self assert: falseBlock startNode nextNode class equals: GrdBodyNode.
 	self assert: trueBlock startNode nextNode startNode nextNode class equals: GrdConstantNode.
@@ -567,15 +566,14 @@ GuirlandeTest >> testJustIfTrueIfFalse [
 	falseBlock := trueBlock nextNode.
 	
 	
-	self assert: singleBranchNode class equals:  GrdChildishNode.
+	self assert: singleBranchNode class equals:  GrdDoubleBranchNode .
 	self assert: singleBranchNode nextNode isExit.
 	self assert: condition class equals: GrdConstantNode.
-	self assert: ifMethod class equals: GrdBodyNode.
+	self assert: ifMethod class equals: GrdCoreMethodNode .
 	self assert: trueBlock class equals: GrdBlockNode.
 	self assert: falseBlock class equals: GrdBlockNode.	
 	self assert: singleBranchNode children size equals: 6.
-	self assert: ifMethod children size equals: 3.
-	self assert: (ifMethod children at:2 ) class equals: GrdDesignChoiceNode.
+	self assert: ifMethod children size equals: 2.
 	self assert: trueBlock startNode nextNode class equals: GrdBodyNode.
 	self assert: falseBlock startNode nextNode class equals: GrdBodyNode.
 	self assert: trueBlock startNode nextNode startNode nextNode class equals: GrdConstantNode.
@@ -663,22 +661,22 @@ GuirlandeTest >> testPureReturnIfFalseIfTrue [
 	| doubleBranchNode condition ifTrueBranch ifFalseBranch ifMethod|
 	self visitSampleMethodNamed: #pureReturnIfFalseIfTrue.
 	
-	doubleBranchNode := visitor startNode nextNode children at:2.
-	condition := doubleBranchNode children at: 2 .
-	ifMethod := doubleBranchNode children at: 3.	
-	ifTrueBranch := doubleBranchNode children at: 4.
-	ifFalseBranch := doubleBranchNode children at: 5.	
+	doubleBranchNode := visitor node startNode nextNode startNode nextNode.
+	condition := doubleBranchNode startNode nextNode .
+	ifMethod := condition nextNode.	
+	ifTrueBranch := ifMethod nextNode.
+	ifFalseBranch := ifTrueBranch nextNode.	
 		
 	self assert: visitor startNode nextNode isReturn.
 	self assert: visitor startNode nextNode nextNode isExit.
-	self assert: doubleBranchNode class equals: GrdChildishNode.
+	self assert: doubleBranchNode class equals: GrdDoubleBranchNode .
 	self assert: condition class equals:  GrdConstantNode.
 	self assert: ifTrueBranch class equals:  GrdBlockNode.
 	self assert: ifFalseBranch class equals:  GrdBlockNode.
-	self assert: ifMethod class equals:  GrdBodyNode.
+	self assert: ifMethod class equals:  GrdCoreMethodNode .
 	self assert: doubleBranchNode children size equals: 6.
-	self assert: condition parent class equals: GrdChildishNode.
-	self assert: ifTrueBranch parent class equals: GrdChildishNode.
+	self assert: condition parent class equals: GrdDoubleBranchNode .
+	self assert: ifTrueBranch parent class equals: GrdDoubleBranchNode .
 	self assert: ifTrueBranch children size equals: 3.
 ]
 
@@ -687,22 +685,22 @@ GuirlandeTest >> testPureReturnIfTrueIfFalse [
 	| doubleBranchNode condition ifTrueBranch ifFalseBranch ifMethod|
 	self visitSampleMethodNamed: #pureReturnIfTrueIfFalse.
 	
-	doubleBranchNode := visitor startNode nextNode children at:2.
-	condition := doubleBranchNode children at: 2 .
-	ifMethod := doubleBranchNode children at: 3.	
-	ifTrueBranch := doubleBranchNode children at: 4.
-	ifFalseBranch := doubleBranchNode children at: 5.	
+	doubleBranchNode := visitor node startNode nextNode startNode nextNode.
+	condition := doubleBranchNode startNode nextNode .
+	ifMethod := condition nextNode.	
+	ifTrueBranch := ifMethod nextNode.
+	ifFalseBranch := ifTrueBranch nextNode.	
 		
-	self assert: visitor startNode nextNode isReturn.
+	self assert: visitor node startNode nextNode isReturn.
 	self assert: visitor startNode nextNode nextNode isExit.
-	self assert: doubleBranchNode class equals: GrdChildishNode.
+	self assert: doubleBranchNode class equals: GrdDoubleBranchNode .
 	self assert: condition class equals:  GrdConstantNode.
 	self assert: ifTrueBranch class equals:  GrdBlockNode.
 	self assert: ifFalseBranch class equals:  GrdBlockNode.
-	self assert: ifMethod class equals:  GrdBodyNode.
+	self assert: ifMethod class equals:  GrdCoreMethodNode .
 	self assert: doubleBranchNode children size equals: 6.
-	self assert: condition parent class equals: GrdChildishNode.
-	self assert: ifTrueBranch parent class equals: GrdChildishNode.
+	self assert: condition parent class equals: GrdDoubleBranchNode.
+	self assert: ifTrueBranch parent class equals: GrdDoubleBranchNode.
 	self assert: ifTrueBranch children size equals: 3.
 		
 		
