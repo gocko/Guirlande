@@ -21,6 +21,76 @@ GuirlandeTest >> setUp [
 	visitor := GrdVisitor new.
 ]
 
+{ #category : #'tests-bodynode' }
+GuirlandeTest >> testAllNodes [
+	| b col cont|
+	
+	b := GrdNode new.
+	col := { GrdConstantNode new value: 1 . GrdConstantNode new value: 2 }.
+	
+	b nextNode: col first.
+	b nextNode nextNode: col second.
+	
+	cont := b allNodes.
+	
+	self assert: b nextNode equals: col first.
+	self assert: b nextNode nextNode equals: col second.
+	self assert: cont size equals: 3.
+	self assert: cont first equals: b.
+	self assert: cont second equals: col first.
+	self assert: cont third equals: col second.
+	
+	
+]
+
+{ #category : #'tests-bodynode' }
+GuirlandeTest >> testAllNodesWithChildren [
+	| b col cont|
+	
+	b := GrdChildishNode new.
+	col := { GrdConstantNode new value: 1 . GrdConstantNode new value: 2 }.
+	
+	b nextNode: col first.
+	b nextNode nextNode: col second.
+	b insertChildren: col.
+	
+	cont := b allNodes.
+	
+	self assert: b nextNode equals: col first.
+	self assert: b nextNode nextNode equals: col second.
+	self assert: cont size equals: 3.
+	self assert: cont first equals: b.
+	self assert: cont second equals: col first.
+	self assert: cont third equals: col second.
+	
+	
+]
+
+{ #category : #'tests-bodynode' }
+GuirlandeTest >> testAllNodesWithRecursiveChildren [
+	| b col cont|
+	
+	b := GrdChildishNode new.
+	col := { GrdConstantNode new value: 1 . GrdConstantNode new value: 2 }.
+	
+	b nextNode: col first.
+	b nextNode nextNode: col second.
+	b insertChildren: col.
+	
+	b addChild: (GrdChildishNode new addAll: b children).
+	
+	cont := b allNodes.
+	
+	self assert: b nextNode equals: col first.
+	self assert: b nextNode nextNode equals: col second.
+	self assert: cont size equals: 4.
+	self assert: cont first equals: b.
+	self assert: cont second equals: col first.
+	self assert: cont third equals: col second.
+	
+	
+]
+
 { #category : #tests }
 GuirlandeTest >> testArray [
 
@@ -315,15 +385,16 @@ GuirlandeTest >> testExpressionSubtraction [
 
 { #category : #tests }
 GuirlandeTest >> testFact [
-	|   ifLessNode  ifLessCondition  ifLessMethod ifLessBlock factNode varNode parameterNode ifMoreNode ifMoreCondition ifMoreMethod ifMoreBlock errorNode |
+	|   ifLessNode  ifLessCondition  ifLessMethod ifLessBlock factNode varNode parameterNode ifMoreNode ifMoreCondition ifMoreMethod ifMoreBlock errorNode ifMoreBlockKids |
 	
 	self flag: 'does not test the recursion'.
 	
 	self visitSampleMethodNamed: #fact.
+
 	varNode := visitor node startNode nextNode startNode nextNode startNode nextNode .
 	factNode := varNode nextNode.
 	parameterNode := factNode nextNode.
-	
+
 	ifLessNode := factNode startNode nextNode .
 	ifLessCondition := ifLessNode startNode nextNode.
 	ifLessMethod := ifLessCondition nextNode.
@@ -333,6 +404,8 @@ GuirlandeTest >> testFact [
 	ifMoreCondition := ifMoreNode startNode nextNode.
 	ifMoreMethod := ifMoreCondition nextNode.
 	ifMoreBlock := ifMoreMethod nextNode.
+	
+	ifMoreBlockKids := ifMoreBlock allNodes.
 	
 	errorNode := ifMoreNode nextNode.
 
@@ -357,6 +430,7 @@ GuirlandeTest >> testFact [
 	
 	self assert: errorNode class equals: GrdChildishNode .	
 	
+	self assert: (self collection: ifMoreBlockKids contains: factNode  ) equals: true.
 	
 ]
 
@@ -372,6 +446,17 @@ GuirlandeTest >> testInsertChildren [
 	
 	self assert: (self collection: b startNode nextNode previousNodes contains:b startNode) equals: true.
 	self assert: (self collection: b startNode nextNode nextNode previousNodes contains:col first) equals: true.
+]
+
+{ #category : #'tests-bodynode' }
+GuirlandeTest >> testIsEmpty [
+	| b col cont|
+	b := GrdBodyNode new.
+	
+	self assert: b isEmpty equals: true.
+	
+	b addChild: GrdNode new.
+	self assert: b isEmpty equals: false.
 ]
 
 { #category : #'tests-blocks' }

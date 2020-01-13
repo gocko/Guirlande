@@ -9,7 +9,7 @@ GrdVisualizer >> hasChildBody:n show:view flag:flag visitor: visitor [
 	|astv  |
 	astv := self visitedTree.
 	view nodes: n children forEach: [ : c | 
-			 (c isKindOf: GrdIfDoubleBranchNode) ifTrue:[                               "GrdIfDoubleBranch is different because of: edges connectFrom: #previousNode"
+			 (c isKindOf: GrdDoubleBranchNode) ifTrue:[                               "GrdIfDoubleBranch is different because of: edges connectFrom: #previousNode"
 					self showColors:flag node: c view:view visitor:visitor.				
 					view shape arrowedLine.	
 					view edges connectFromAll: #previousNodes.

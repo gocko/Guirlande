@@ -4,6 +4,25 @@ Class {
 	#category : #Guirlande
 }
 
+{ #category : #'as yet unclassified' }
+GrdChildishNode >> addAll: listOfNodes [
+	listOfNodes  do:  [:each | ((each class = GrdStartNode)  or: [each class = GrdExitNode ]) ifFalse: [ self addChild: each ] ].
+	
+	
+]
+
+{ #category : #'as yet unclassified' }
+GrdChildishNode >> addAllNodesTo: kids [
+
+| aKid | 
+
+kids add: self.
+(self unproperNextNode or: [kids includes: self nextNode] ) ifFalse: [ self nextNode addAllNodesTo: kids].
+aKid := self startNode nextNode .
+(aKid unproperNode or: [kids includes: aKid]) ifFalse: [aKid addAllNodesTo: kids] .
+^ kids
+]
+
 { #category : #accessing }
 GrdChildishNode >> addChild: aNode [
 self flag: 'maybe can have two previous nodes'.
@@ -18,6 +37,19 @@ self flag: 'maybe can have two previous nodes'.
 	
 
 
+]
+
+{ #category : #'as yet unclassified' }
+GrdChildishNode >> allNodes [
+
+| kids aKid | 
+
+kids := OrderedCollection new.
+kids add: self.
+(self unproperNextNode or: [kids includes: self nextNode] ) ifFalse: [ kids addAll:  self nextNode allNodes ].
+aKid := self startNode nextNode .
+(aKid unproperNode or: [kids includes: aKid]) ifFalse: [kids addAll: aKid allNodes] .
+^ kids
 ]
 
 { #category : #accessing }
@@ -65,14 +97,28 @@ GrdChildishNode >> insertChildren: listOfNodes [
 	
 ]
 
+{ #category : #'as yet unclassified' }
+GrdChildishNode >> isEmpty [
+	^ self children size = 2 and: [self children second class = GrdExitNode]
+]
+
 { #category : #accessing }
 GrdChildishNode >> mergeToNode: aNode [
 	
-	children isNil ifFalse: [ aNode children isNil ifTrue: [aNode children: self children] ifFalse: [  aNode children addAll: self children]].
-	aNode parent: self parent.
-	parent children at: (parent children find: self) put: aNode.
-	aNode nextNode isNil ifTrue: [ aNode nextNode: self nextNode ].
+	aNode isEmpty
+		ifFalse:[	self addChild: aNode ].
+		
+	
+]
+
+{ #category : #accessing }
+GrdChildishNode >> mergeWithNode: aNode [
+	
+	children isNil ifFalse: [ aNode children isNil ifTrue: [aNode children: children] ifFalse: [  aNode addAll: self children]].
+	aNode nextNode isNil ifTrue: [ aNode nextNode: nextNode ].
 	aNode previousNodes addAll: self previousNodes.
+	aNode parent: self parent.
+	"aNode parent addChild: aNode."
 	^aNode
 ]
 

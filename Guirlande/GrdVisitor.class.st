@@ -215,7 +215,7 @@ GrdVisitor >> visitBodyNode: aNode at: entryPoints [
 					temp := self visitNoninferringMessageNode: each.
 					temp isNil 
 						ifFalse: [ b addChild: temp]
-						ifTrue: [ self halt. b addChild: (self visitMessageNode: each at: entryPoints)]]
+						ifTrue: [ b addChild: (self visitMessageNode: each at: entryPoints)]]
 				ifFalse: [  b addChild: (self visitNode: each)]] ) .
 	b name: 'body'.
 	^ b 
@@ -248,34 +248,23 @@ GrdVisitor >> visitIfFalse: aNode [
 { #category : #'visiting control selectors' }
 GrdVisitor >> visitIfFalseIfTrue: aNode [
 
-	| conditionNode cond if else |
+	| conditionNode cond branchMethod if else |
 
-self flag: 'we are not going to need this'.
 
-	conditionNode := GrdIfDoubleBranchNode new.
+	conditionNode := GrdDoubleBranchNode new.
 	cond := self visitNode: aNode receiver.
-	if := self visitNode: aNode arguments second.
-	else := self visitNode: aNode arguments first.
-	conditionNode name: 'ifFalseIfTrue node'.
+	branchMethod := GrdCoreMethodNode new name: 'ifFalse:ifTrue: '.
+	else := self visitNode: aNode arguments second.
+	if  := self visitNode: aNode arguments first.
+	conditionNode name: 'IfFalseifTrue node'.
 		
 	conditionNode addChild:cond.
-	conditionNode addChild: else.
-	conditionNode addChild: if.		
-			
-	cond nextNode: else.
-	else previousNodes add: cond.			
-	cond nextNode: if.
-	if previousNodes add: cond.
-	
-	cond parent: conditionNode.
-	else parent: conditionNode.
-	if parent: conditionNode.
-
-	^ conditionNode
-			condition: cond;
-			elseBranch: else ;
-			ifBranch: if
+	conditionNode addChild: branchMethod.
+	conditionNode addChild: else.	
+	conditionNode addChild: if.	
 		
+		
+	^ conditionNode
 ]
 
 { #category : #'visiting control selectors' }
@@ -297,34 +286,23 @@ GrdVisitor >> visitIfTrue: aNode [
 
 { #category : #'visiting control selectors' }
 GrdVisitor >> visitIfTrueIfFalse: aNode [
-	| conditionNode cond if else |
-	
-self flag: 'we are not going to need this'.
 
-	conditionNode := GrdIfDoubleBranchNode new.
+	| conditionNode cond branchMethod if else |
+
+
+	conditionNode := GrdDoubleBranchNode new.
 	cond := self visitNode: aNode receiver.
-	if := self visitNode: aNode arguments first.
+	branchMethod := GrdCoreMethodNode new name: 'ifTrue:ifFalse: '.
+	if  := self visitNode: aNode arguments first.
 	else := self visitNode: aNode arguments second.
-	conditionNode name:'ifTrueIfFalse node'.
-	
+	conditionNode name: 'ifTrueIfFalse node'.
+		
 	conditionNode addChild:cond.
-	conditionNode addChild: if.
-	conditionNode addChild: else.
-	
-	cond nextNode: if.
-	if previousNodes add:  cond.
-	cond nextNode: else.
-	else previousNodes add: cond.
-
-	
-	cond parent: conditionNode.
-	if parent: conditionNode.
-	else parent: conditionNode.
-	
+	conditionNode addChild: branchMethod.
+	conditionNode addChild: if.	
+	conditionNode addChild: else.		
+		
 	^ conditionNode
-		condition: cond;
-		ifBranch: if;
-		elseBranch: else 
 ]
 
 { #category : #visiting }
@@ -369,10 +347,10 @@ GrdVisitor >> visitMessageNode: aNode at: entryPoint [
 	(aNode isCascaded not or: [aNode isFirstCascaded]) 
 		ifTrue: [ childishNode addChild: (self visitNode: aNode receiver)].
 
-	[messageType := entryPoint getMessageType: aNode.
+	messageType := entryPoint getMessageType: aNode.
 	methodsInvoked  := messageType methodTypes. 
-	methodsInvoked do: [:each | each notNil ifTrue: [childishNode addChild:  ( self visitMethodNode: each node at: each )] ]]	
-	 on: Error do: [:ex | childishNode addChild: (GrdUndefinedMessageNode new name: aNode selector asString)].
+	methodsInvoked do: [:each | each notNil ifTrue: [childishNode addChild:  ( self visitMethodNode: each node at: each )] ].
+	 "on: Error do: [:ex | childishNode addChild: (GrdUndefinedMessageNode new name: aNode selector asString)]."
 	
 	 
 	aNode arguments do: [:each | childishNode addChild: (self visitNode: each)].
@@ -396,10 +374,11 @@ GrdVisitor >> visitMethodNode: aMethodNode [
 			(methods includesKey:  entryPoint ) 
 				ifTrue: [ b := methods at: entryPoint]
 				ifFalse: [ 
-					methods add: entryPoint -> GrdNode new.
+					methods add: entryPoint -> GrdBodyNode new.
 					b :=  self visitBodyNode: aMethodNode body at: entryPoint .
 					b name: 'Method ' , aMethodNode selector asString . 
-					methods at: entryPoint put: ((methods at: entryPoint ) mergeToNode: b).
+					(methods at: entryPoint ) mergeToNode: b.
+					methods at: entryPoint put: b.
 					]
 				]
 			ifFalse: [  
@@ -419,7 +398,7 @@ GrdVisitor >> visitMethodNode: aMethodNode at: entryPoint [
 	(methods includesKey:  entryPoint) 
 		ifTrue: [  b := methods at: entryPoint]
 		ifFalse: [ 	
-			methods add: entryPoint -> GrdNode new.
+			methods add: entryPoint -> GrdBodyNode new.
 			b := self visitBodyNode: aMethodNode body at: entryPoint.
 			b name: 'Method ' , aMethodNode selector asString . 
 			methods at: entryPoint put: ((methods at: entryPoint ) mergeToNode: b).

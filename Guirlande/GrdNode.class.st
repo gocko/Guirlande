@@ -12,14 +12,22 @@ Class {
 }
 
 { #category : #accessing }
-GrdNode >> allNodes [
-| children | 
+GrdNode >> addAllNodesTo: kids [
 
-children := OrderedCollection new.
-children add: self.
-(self isKindOf: GrdChildishNode)
-ifTrue: [ self children do: [  :each | children addAll: each allNodes] ].
-^ children
+kids add: self.
+(self unproperNextNode  or: [kids includes: self nextNode] ) ifFalse: [ self nextNode addAllNodesTo: kids ].
+
+^ kids
+]
+
+{ #category : #accessing }
+GrdNode >> allNodes [
+| kids | 
+
+kids := OrderedCollection new.
+self addAllNodesTo: kids.
+
+^ kids
 ]
 
 { #category : #accessing }
@@ -47,15 +55,6 @@ GrdNode >> isExit [
 GrdNode >> isReturn [
 
 	^ false
-]
-
-{ #category : #accessing }
-GrdNode >> mergeToNode: aNode [
-	
-	self children isNil ifFalse: [ aNode children isNil ifTrue: [aNode children: self children] ifFalse: [  aNode children addAll: self children]].
-	aNode nextNode isNil ifTrue: [ aNode nextNode: self nextNode ].
-	^aNode
-
 ]
 
 { #category : #accessing }
@@ -99,4 +98,14 @@ GrdNode >> previousNodes [
 { #category : #accessing }
 GrdNode >> previousNodes: aCollectionOfNodes [
 	previousNodes := aCollectionOfNodes
+]
+
+{ #category : #accessing }
+GrdNode >> unproperNextNode [
+	^ self nextNode isNil or: [( self nextNode class = GrdStartNode)  or: [self nextNode class = GrdExitNode ]]
+]
+
+{ #category : #accessing }
+GrdNode >> unproperNode [
+	^ self isNil or: [( self  class = GrdStartNode)  or: [self  class = GrdExitNode ]]
 ]

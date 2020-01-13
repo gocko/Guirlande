@@ -1,5 +1,0 @@
-Class {
-	#name : #GrdIfDoubleBranchNode,
-	#superclass : #GrdConditionNode,
-	#category : #Guirlande
-}
