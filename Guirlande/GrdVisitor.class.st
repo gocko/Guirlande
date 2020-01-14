@@ -364,28 +364,28 @@ GrdVisitor >> visitMethodNode: aMethodNode [
 	
 	| b entryPoint|
 	self flag: 'clean all these dirty places. <todo: make inferer a singleton>'.
-	
-	(self inferer isNil ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  aMethodNode ].
-	
-	
-	(self inferer entryPoints notEmpty )
-		ifTrue: [ 
-			entryPoint := self inferer entryPoints at: 1.
-			(methods includesKey:  entryPoint ) 
-				ifTrue: [ b := methods at: entryPoint]
-				ifFalse: [ 
-					methods add: entryPoint -> GrdBodyNode new.
-					b :=  self visitBodyNode: aMethodNode body at: entryPoint .
-					b name: 'Method ' , aMethodNode selector asString . 
-					(methods at: entryPoint ) mergeToNode: b.
-					methods at: entryPoint put: b.
+		self flag: 'should not stop when is not possible to infer. should go down in ifFalse. Ensure: ?'.	
+	[(self inferer isNil ) ifTrue: [ self inferer: PhineasInferer new. self inferer infer:  aMethodNode ]] 
+	ensure:[
+		(self inferer entryPoints notEmpty )
+			ifTrue: [ 
+				entryPoint := self inferer entryPoints at: 1.
+				(methods includesKey:  entryPoint ) 
+					ifTrue: [ b := methods at: entryPoint]
+					ifFalse: [ 
+						methods add: entryPoint -> GrdBodyNode new.
+						self flag: 'it can happen that we get an unbound exception here'.
+						b :=  self visitBodyNode: aMethodNode body at: entryPoint .
+						b name: 'Method ' , aMethodNode selector asString . 
+						(methods at: entryPoint ) mergeToNode: b.
+						methods at: entryPoint put: b.
+						]
 					]
-				]
-			ifFalse: [  
-				b :=  self visitBodyNode: aMethodNode body .
-				b name: 'Method ' , aMethodNode selector asString . 
-			].
-	
+				ifFalse: [  
+					b :=  self visitBodyNode: aMethodNode body .
+					b name: 'Method ' , aMethodNode selector asString . 
+				].
+].	
 		^ b
 ]
 

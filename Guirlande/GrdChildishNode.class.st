@@ -14,12 +14,8 @@ GrdChildishNode >> addAll: listOfNodes [
 { #category : #'as yet unclassified' }
 GrdChildishNode >> addAllNodesTo: kids [
 
-| aKid | 
-
-kids add: self.
-(self unproperNextNode or: [kids includes: self nextNode] ) ifFalse: [ self nextNode addAllNodesTo: kids].
-aKid := self startNode nextNode .
-(aKid unproperNode or: [kids includes: aKid]) ifFalse: [aKid addAllNodesTo: kids] .
+super addAllNodesTo: kids. 
+self children do: [:aKid| (aKid unproperNode or: [kids includes: aKid]) ifFalse: [aKid addAllNodesTo: kids] ].
 ^ kids
 ]
 
@@ -37,19 +33,6 @@ self flag: 'maybe can have two previous nodes'.
 	
 
 
-]
-
-{ #category : #'as yet unclassified' }
-GrdChildishNode >> allNodes [
-
-| kids aKid | 
-
-kids := OrderedCollection new.
-kids add: self.
-(self unproperNextNode or: [kids includes: self nextNode] ) ifFalse: [ kids addAll:  self nextNode allNodes ].
-aKid := self startNode nextNode .
-(aKid unproperNode or: [kids includes: aKid]) ifFalse: [kids addAll: aKid allNodes] .
-^ kids
 ]
 
 { #category : #accessing }

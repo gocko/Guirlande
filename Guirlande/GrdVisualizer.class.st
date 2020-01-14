@@ -90,7 +90,8 @@ GrdVisualizer >> visualizeCFG [
 	
 	visitor := GrdVisitor  new.
 	astv := ( visitor visitMethodNode: (GrdSample>>#fact) ast).
-	
+
+		
 	nodes := astv allNodes.
 	
 	shapes :=  nodes collect: [ :cls |
@@ -112,10 +113,10 @@ GrdVisualizer >> visualizeCFG [
 	
 	eb := RSEdgeBuilder arrowedLine.
 	eb canvas: c.
-	eb connectFrom: #parent .
-	eb connectTo: #nextNode.
+	"eb connectFrom: #parent ".
+	eb connectToAll: [:node |  (node children ifNil: [OrderedCollection new]), {node nextNode}  ].
 
-	RSHorizontalTreeLayout  new 
+	RSTreeLayout   new 
 		
 		on: c nodes.
 	c @ RSCanvasController.

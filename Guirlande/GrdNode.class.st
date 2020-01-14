@@ -14,8 +14,9 @@ Class {
 { #category : #accessing }
 GrdNode >> addAllNodesTo: kids [
 
-kids add: self.
-(self unproperNextNode  or: [kids includes: self nextNode] ) ifFalse: [ self nextNode addAllNodesTo: kids ].
+
+(self unproperNode  or: [kids includes: self ] ) ifFalse: [ kids add: self ].
+self nextNode isNil ifFalse:[ self nextNode addAllNodesTo: kids].
 
 ^ kids
 ]
