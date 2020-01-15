@@ -82,6 +82,7 @@ GrdNode >> nextNode: aNode [
 
 { #category : #accessing }
 GrdNode >> parent [
+self flag: 'it can have more than one parent. e.g recursive method has more than one parent: initial and recusive call.'.
 	^ parent
 ]
 

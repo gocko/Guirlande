@@ -45,6 +45,17 @@ GrdChildishNode >> children: anObject [
 	children := anObject
 ]
 
+{ #category : #accessing }
+GrdChildishNode >> collectThisLevelNodes [
+	| col temp |
+	col := OrderedCollection new.
+	temp := self startNode.
+	[temp isKindOf: GrdExitNode] whileFalse: [ col add: temp. temp := temp nextNode ].
+	col add: temp.
+	^ col
+
+]
+
 { #category : #'as yet unclassified' }
 GrdChildishNode >> exitNode [
 	^ children last

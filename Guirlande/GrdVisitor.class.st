@@ -128,7 +128,7 @@ GrdVisitor >> visitAssignmentNode: aNode [
 	variable nextNode: value.
 	value previousNodes add: variable.
 
-	a name: 'array'.
+	a name: ':='.
 	^ a
 ]
 
@@ -142,7 +142,7 @@ GrdVisitor >> visitBinary: aNode [
 	msgSelector name: aNode selector.
 	msgSelector value:aNode selector.
 	
-	binaryNode name: 'binary node'.
+	binaryNode name: 'binary msg: ', aNode selector asString .
 
 	msgReceiver nextNode: msgSelector.
 	msgSelector previousNodes add: msgReceiver.
@@ -236,7 +236,7 @@ GrdVisitor >> visitIfFalse: aNode [
 	cond := self visitNode: aNode receiver.
 	method := GrdCoreMethodNode new name: 'ifFalse:'.
 	if := self visitBlockNode: aNode arguments first.
-	conditionNode name: 'ifFalse node'.
+	conditionNode name: 'ifFalse: node'.
 
 	conditionNode addChild: cond.
 	conditionNode addChild: method.
@@ -256,7 +256,7 @@ GrdVisitor >> visitIfFalseIfTrue: aNode [
 	branchMethod := GrdCoreMethodNode new name: 'ifFalse:ifTrue: '.
 	else := self visitNode: aNode arguments second.
 	if  := self visitNode: aNode arguments first.
-	conditionNode name: 'IfFalseifTrue node'.
+	conditionNode name: 'IfFalse:ifTrue: node'.
 		
 	conditionNode addChild:cond.
 	conditionNode addChild: branchMethod.
@@ -274,7 +274,7 @@ GrdVisitor >> visitIfTrue: aNode [
 	cond := self visitNode: aNode receiver.
 	method := GrdCoreMethodNode new name: 'ifTrue:'.
 	if := self visitBlockNode: aNode arguments first.
-	conditionNode name: 'ifTrue node'.
+	conditionNode name: 'ifTrue: node'.
 
 	conditionNode addChild: cond.
 	conditionNode addChild: method.
@@ -295,7 +295,7 @@ GrdVisitor >> visitIfTrueIfFalse: aNode [
 	branchMethod := GrdCoreMethodNode new name: 'ifTrue:ifFalse: '.
 	if  := self visitNode: aNode arguments first.
 	else := self visitNode: aNode arguments second.
-	conditionNode name: 'ifTrueIfFalse node'.
+	conditionNode name: 'ifTrue:IfFalse: node'.
 		
 	conditionNode addChild:cond.
 	conditionNode addChild: branchMethod.
@@ -316,8 +316,7 @@ GrdVisitor >> visitLiteralArrayNode: aNode [
 { #category : #visiting }
 GrdVisitor >> visitLiteralNode: aNode [
 	| c |
-	c := GrdConstantNode new value: aNode value.
-	c name: 'literal'.
+	c := GrdConstantNode new name:  aNode value asString.
 	^ c
 ]
 
@@ -332,7 +331,7 @@ GrdVisitor >> visitMessageNode: aNode [
 	self inferer isNil ifTrue:[ self inferer: PhineasInferer new. self inferer infer:  aNode ].
 	
 	[entryPoint := ((inferer typeProvider messageTypes) detect: [:messageType | messageType message = aNode]) methodType ]
-		on: Error do: [^ GrdUndefinedMessageNode new name: aNode selector asString , ' in frist step'].
+		on: Error do: [^ GrdUndefinedMessageNode new name: 'GrdUndefinedMessageNode: ', aNode selector asString , '[exited in frist step]'].
 	
 	^ self visitMessageNode: aNode at: entryPoint 
 ]
@@ -373,17 +372,17 @@ GrdVisitor >> visitMethodNode: aMethodNode [
 				(methods includesKey:  entryPoint ) 
 					ifTrue: [ b := methods at: entryPoint]
 					ifFalse: [ 
-						methods add: entryPoint -> GrdBodyNode new.
+						methods add: entryPoint -> GrdChildishNode new.
 						self flag: 'it can happen that we get an unbound exception here'.
 						b :=  self visitBodyNode: aMethodNode body at: entryPoint .
-						b name: 'Method ' , aMethodNode selector asString . 
+						b name: 'Method: ' , aMethodNode selector asString . 
 						(methods at: entryPoint ) mergeToNode: b.
 						methods at: entryPoint put: b.
 						]
 					]
 				ifFalse: [  
 					b :=  self visitBodyNode: aMethodNode body .
-					b name: 'Method ' , aMethodNode selector asString . 
+					b name: 'Method: ' , aMethodNode selector asString , '[without inferer]'. 
 				].
 ].	
 		^ b
@@ -398,9 +397,9 @@ GrdVisitor >> visitMethodNode: aMethodNode at: entryPoint [
 	(methods includesKey:  entryPoint) 
 		ifTrue: [  b := methods at: entryPoint]
 		ifFalse: [ 	
-			methods add: entryPoint -> GrdBodyNode new.
+			methods add: entryPoint -> GrdChildishNode new.
 			b := self visitBodyNode: aMethodNode body at: entryPoint.
-			b name: 'Method ' , aMethodNode selector asString . 
+			b name: 'Method: ' , aMethodNode selector asString . 
 			methods at: entryPoint put: ((methods at: entryPoint ) mergeToNode: b).
 		].
 	^ b 
@@ -436,8 +435,8 @@ GrdVisitor >> visitReturnNode: aReturnNode [
 { #category : #visiting }
 GrdVisitor >> visitVariableNode: aNode [
 	| v |
-	v := GrdVariableNode new value: aNode value.
-	v name: 'variable'.
+	v := GrdVariableNode new .
+	v name: 'variable: ', aNode value asString.
 	^ v
 ]
 
@@ -452,7 +451,7 @@ self flag: 'we are not going to need this. Replace by whileTrue'.
 	blockArg := self visitBlockNode: (aNode arguments) first.
 	bodyOfBlock := (blockArg children at:2).
    exitOfBody := (bodyOfBlock children at:2) nextNode .
-	loopNode name: 'whileTrue node'.
+	loopNode name: 'whileFalse: node'.
 
 	loopNode addChild: collectionReceiver.
 	loopNode addChild: (GrdCoreMethodNode new name: 'whileFalse:').
@@ -471,7 +470,7 @@ GrdVisitor >> visitWhileTrue: aNode [
 	collectionReceiver := self visitNode: aNode receiver.
 	blockArg := self visitBlockNode: (aNode arguments) first.
 	bodyOfBlock := (blockArg children at:2).
-	loopNode name: 'whileTrue node'.
+	loopNode name: 'whileTrue: node'.
 
 
 	loopNode addChild: collectionReceiver.

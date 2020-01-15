@@ -103,7 +103,7 @@ GrdVisualizer >> visualizeCFG [
 		RSComposite new
 			draggable;
 			model: cls;
-			shapes: (RSGroup with: lps with: lbl );
+			shapes: shapes;"(RSGroup with: lps with: lbl );"
 			yourself 
 		
 		 ].
@@ -123,4 +123,66 @@ GrdVisualizer >> visualizeCFG [
 	^ c	
 	
 
+]
+
+{ #category : #'main methods' }
+GrdVisualizer >> visualizeCFGAdvanced [
+<script: 'self new visualizeCFGAdvanced open'>
+	| canvas shapes visitor astv nodes sequence tmp  lbl|
+
+	canvas := RSCanvas new.
+	
+	visitor := GrdVisitor  new.
+	astv := ( visitor visitMethodNode: (GrdSample>>#fact) ast).
+
+		
+	nodes := astv allNodes.
+	
+	shapes := nodes  collect: [ :cls | 
+		| kids |
+		
+
+		
+		(cls isKindOf: GrdChildishNode)
+			ifTrue: [ 
+				sequence := cls collectThisLevelNodes . 
+				kids := sequence collect: [ :met | 
+					RSBox new
+						model: met;
+						size: 50;
+						popup;
+						color: Color lightBlue  ;
+						when: RSMouseClick do: [ :evt | evt shape inspect ];
+						yourself.
+			 ]]
+			ifFalse: [ 
+				kids := OrderedCollection new. 
+				tmp := RSBox new
+						model: cls;
+						color: Color lightGreen   ;
+						size: 50;
+						popup;
+						when: RSMouseClick do: [ :evt | evt shape inspect ];
+						yourself.
+				kids add: tmp ].
+			
+			RSHorizontalLineLayout on: kids.
+			RSComposite new
+				model: cls;
+				shapes: kids;
+				padding: 20;
+				color: Color lightGray   ;
+				draggable; 
+				popup;
+				yourself ].
+	
+	RSEdgeBuilder arrowedLine
+		withBorderAttachPoint ;
+		canvas: canvas;
+		shapes: shapes;
+		connectToAll: [:node | (node children ifNil: [OrderedCollection new]), {node nextNode}  ].
+	canvas addAll: shapes.
+	RSTreeLayout on: shapes.
+	canvas @ RSCanvasController.
+	^ canvas.  
 ]
